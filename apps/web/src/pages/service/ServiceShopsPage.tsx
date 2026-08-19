@@ -384,7 +384,7 @@ function ActionsDropdown({
   onDelete: () => void;
 }) {
   return (
-    <div className="relative inline-block text-left" onMouseLeave={onClose}>
+    <div className="relative inline-block text-left">
       <button
         className="flex h-9 w-9 items-center justify-center rounded-md border border-ink-200 text-ink-600 hover:bg-ink-50"
         onClick={onToggle}
@@ -394,7 +394,10 @@ function ActionsDropdown({
         <span className="sr-only">Amallar</span>
       </button>
       {open ? (
-        <div className="absolute right-0 z-20 mt-2 w-64 rounded-md border border-ink-200 bg-[#fbfdf8] p-1 text-sm shadow-lg">
+        <div
+          className="absolute right-0 z-20 mt-2 w-64 rounded-md border border-ink-200 bg-[#fbfdf8] p-1 text-sm shadow-lg"
+          onMouseLeave={onClose}
+        >
           <Link
             className="block rounded px-3 py-2 font-medium text-brand-700 hover:bg-brand-50"
             to={`/service/shops/${shop.id}`}
