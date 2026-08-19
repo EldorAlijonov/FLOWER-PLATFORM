@@ -219,7 +219,7 @@ export function ServiceShopsPage() {
                 </thead>
                 <tbody className="divide-y divide-ink-100">
                   {shopsQuery.data.map((shop, index) => (
-                    <tr key={shop.id}>
+                    <tr className="transition hover:bg-[#f2f7f1]" key={shop.id}>
                       <td className="px-4 py-4 font-medium text-ink-500">{index + 1}</td>
                       <td className="px-4 py-4 font-semibold text-ink-950">{shop.name}</td>
                       <td className="px-4 py-4 text-ink-600">{shop.ownerName}</td>
@@ -261,8 +261,8 @@ export function ServiceShopsPage() {
                 <article
                   className={
                     viewMode === 'cards'
-                      ? 'space-y-4 rounded-md border border-ink-200 bg-[#f8fbf6] p-4 shadow-sm'
-                      : 'space-y-3 p-4'
+                      ? 'space-y-4 rounded-md border border-ink-200 bg-[#f8fbf6] p-4 shadow-sm transition hover:border-brand-200 hover:bg-[#f2f7f1] hover:shadow-md'
+                      : 'space-y-3 p-4 transition hover:bg-[#f2f7f1]'
                   }
                   key={shop.id}
                 >

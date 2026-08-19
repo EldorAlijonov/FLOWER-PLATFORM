@@ -66,7 +66,7 @@ export function ServiceDashboardPage() {
         <div className="divide-y divide-ink-100">
           {dashboardQuery.data.recentShops.map((shop, index) => (
             <div
-              className="grid gap-3 px-4 py-4 text-sm sm:grid-cols-[3rem_1.4fr_0.8fr_0.8fr_0.7fr] sm:items-center sm:px-5"
+              className="grid gap-3 px-4 py-4 text-sm transition hover:bg-[#f2f7f1] sm:grid-cols-[3rem_1.4fr_0.8fr_0.8fr_0.7fr] sm:items-center sm:px-5"
               key={shop.id}
             >
               <span className="font-medium text-ink-500">{index + 1}</span>

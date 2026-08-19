@@ -35,7 +35,7 @@ export function ServiceAuditPage() {
               </thead>
               <tbody className="divide-y divide-ink-100">
                 {auditQuery.data.map((log, index) => (
-                  <tr key={log.id}>
+                  <tr className="transition hover:bg-[#f2f7f1]" key={log.id}>
                     <td className="px-4 py-4 font-medium text-ink-500">{index + 1}</td>
                     <td className="px-4 py-4 text-ink-600">
                       {new Date(log.createdAt).toLocaleString('uz-UZ')}
