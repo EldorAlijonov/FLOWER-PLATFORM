@@ -15,7 +15,7 @@ export function ServiceAuditPage() {
         <p className="mt-1 text-sm text-ink-500">Service Panel amallari audit loglari.</p>
       </section>
 
-      <section className="rounded-md border border-ink-200 bg-white shadow-sm">
+      <section className="rounded-md border border-ink-200 bg-[#fbfdf8] shadow-sm">
         {auditQuery.isLoading ? <p className="p-4 text-sm text-ink-500">Yuklanmoqda...</p> : null}
         {auditQuery.isError ? (
           <p className="p-4 text-sm text-petal-700">Audit tarixini yuklab bo'lmadi.</p>
@@ -25,7 +25,7 @@ export function ServiceAuditPage() {
             <table className="w-full min-w-[760px] text-left text-sm">
               <thead className="bg-ink-50 text-xs uppercase text-ink-500">
                 <tr>
-                  <th className="w-16 px-4 py-3 font-medium">№</th>
+                  <th className="w-16 px-4 py-3 font-medium">No.</th>
                   <th className="px-4 py-3 font-medium">Sana</th>
                   <th className="px-4 py-3 font-medium">Actor</th>
                   <th className="px-4 py-3 font-medium">Action</th>

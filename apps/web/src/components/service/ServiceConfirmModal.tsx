@@ -47,7 +47,7 @@ export function ServiceConfirmModal({
   return (
     <div aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6" role="dialog">
       <button aria-label="Bekor qilish" className="absolute inset-0 bg-ink-950/45" onClick={onCancel} type="button" />
-      <section className="relative w-full max-w-md rounded-md border border-ink-200 bg-white p-5 shadow-xl">
+      <section className="relative w-full max-w-md rounded-md border border-ink-200 bg-[#fbfdf8] p-5 shadow-xl">
         <div className="flex gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-sun-50 text-sun-700">
             <AlertTriangle aria-hidden="true" size={20} />

@@ -30,7 +30,7 @@ export function ServiceLayout({ user, onLogout, loggingOut }: ServiceLayoutProps
   );
 
   return (
-    <div className="min-h-screen bg-ink-100 text-ink-950">
+    <div className="h-screen overflow-hidden bg-[#eef3ef] text-ink-950">
       <div className="fixed inset-y-0 left-0 z-30 hidden lg:block">
         <ServiceSidebar />
       </div>
@@ -49,7 +49,7 @@ export function ServiceLayout({ user, onLogout, loggingOut }: ServiceLayoutProps
         </div>
       ) : null}
 
-      <div className="lg:pl-72">
+      <div className="flex h-screen flex-col lg:pl-72">
         <ServiceHeader
           loggingOut={loggingOut}
           onLogout={onLogout}
@@ -57,7 +57,7 @@ export function ServiceLayout({ user, onLogout, loggingOut }: ServiceLayoutProps
           title={title}
           user={user}
         />
-        <main className="px-4 py-5 sm:px-6 lg:px-8">
+        <main className="flex-1 overflow-y-auto px-4 py-5 sm:px-6 lg:px-8">
           <Outlet />
         </main>
       </div>

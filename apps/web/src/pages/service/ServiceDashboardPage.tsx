@@ -58,7 +58,7 @@ export function ServiceDashboardPage() {
         ))}
       </section>
 
-      <section className="rounded-md border border-ink-200 bg-white shadow-sm">
+      <section className="rounded-md border border-ink-200 bg-[#fbfdf8] shadow-sm">
         <div className="border-b border-ink-200 px-4 py-4 sm:px-5">
           <h2 className="text-base font-semibold text-ink-950">Oxirgi yaratilgan do'konlar</h2>
           <p className="mt-1 text-sm text-ink-500">Real database ma'lumotlari.</p>

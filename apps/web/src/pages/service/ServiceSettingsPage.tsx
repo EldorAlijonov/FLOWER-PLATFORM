@@ -19,7 +19,7 @@ export function ServiceSettingsPage() {
       <section className="space-y-3">
         {sections.map((section) => (
           <article
-            className="rounded-md border border-ink-200 bg-white p-5 shadow-sm"
+            className="rounded-md border border-ink-200 bg-[#fbfdf8] p-5 shadow-sm"
             key={section.title}
           >
             <h3 className="text-base font-semibold text-ink-950">{section.title}</h3>

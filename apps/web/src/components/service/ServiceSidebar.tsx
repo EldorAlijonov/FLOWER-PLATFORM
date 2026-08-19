@@ -17,7 +17,7 @@ export function ServiceSidebar({ onNavigate }: ServiceSidebarProps) {
   const location = useLocation();
 
   return (
-    <aside className="flex h-full w-72 flex-col border-r border-ink-200 bg-white">
+    <aside className="flex h-full w-72 flex-col border-r border-ink-200 bg-[#f8fbf6]">
       <div className="grid grid-cols-3" aria-hidden="true">
         <div className="h-1 bg-brand-700" />
         <div className="h-1 bg-petal-600" />

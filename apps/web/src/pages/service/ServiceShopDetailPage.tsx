@@ -176,7 +176,7 @@ export function ServiceShopDetailPage() {
         />
       </section>
 
-      <section className="rounded-md border border-ink-200 bg-white shadow-sm">
+      <section className="rounded-md border border-ink-200 bg-[#fbfdf8] shadow-sm">
         <div className="border-b border-ink-200 px-4 py-4">
           <h3 className="font-semibold text-ink-950">Do'konni tahrirlash</h3>
           <p className="mt-1 text-sm text-ink-500">
@@ -230,7 +230,7 @@ export function ServiceShopDetailPage() {
         </form>
       </section>
 
-      <section className="rounded-md border border-ink-200 bg-white p-4 shadow-sm">
+      <section className="rounded-md border border-ink-200 bg-[#fbfdf8] p-4 shadow-sm">
         <h3 className="font-semibold text-ink-950">Xavfsizlik amallari</h3>
         <div className="mt-4 flex flex-wrap gap-2">
           {shop.status === 'ACTIVE' ? (
@@ -286,7 +286,7 @@ export function ServiceShopDetailPage() {
             onClick={() => setTemporaryPassword(null)}
             type="button"
           />
-          <section className="relative w-full max-w-md rounded-md border border-ink-200 bg-white p-5 shadow-xl">
+          <section className="relative w-full max-w-md rounded-md border border-ink-200 bg-[#fbfdf8] p-5 shadow-xl">
             <h2 className="text-lg font-semibold text-ink-950">Yangi bir martalik parol</h2>
             <p className="mt-3 text-sm text-ink-500">Bu parol faqat bir marta ko'rsatiladi.</p>
             <div className="mt-4 rounded-md bg-ink-50 p-4">
@@ -323,7 +323,7 @@ export function ServiceShopDetailPage() {
 
 function InfoCard({ label, value }: { label: string; value: string }) {
   return (
-    <article className="rounded-md border border-ink-200 bg-white p-4 shadow-sm">
+    <article className="rounded-md border border-ink-200 bg-[#fbfdf8] p-4 shadow-sm">
       <p className="text-sm text-ink-500">{label}</p>
       <p className="mt-2 font-semibold text-ink-950">{value}</p>
     </article>

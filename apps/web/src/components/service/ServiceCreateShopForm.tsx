@@ -93,7 +93,7 @@ export function ServiceCreateShopForm({ firstInputRef, onSuccess }: ServiceCreat
           <p className="font-semibold">Do'kon muvaffaqiyatli yaratildi.</p>
           <p className="mt-2">Bu ma'lumot faqat bir marta ko'rsatiladi.</p>
         </div>
-        <div className="rounded-md border border-ink-200 bg-white p-4">
+        <div className="rounded-md border border-ink-200 bg-[#f8fbf6] p-4">
           <div className="grid gap-3 text-sm sm:grid-cols-2">
             <div>
               <p className="text-ink-500">Login</p>

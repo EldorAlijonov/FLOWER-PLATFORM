@@ -29,7 +29,7 @@ export function ServicePlansPage() {
       <section className="grid gap-4 md:grid-cols-3">
         {plans.map((plan) => (
           <article
-            className="rounded-md border border-ink-200 bg-white p-5 shadow-sm"
+            className="rounded-md border border-ink-200 bg-[#fbfdf8] p-5 shadow-sm"
             key={plan.name}
           >
             <p className="text-sm font-semibold text-brand-700">{plan.name}</p>

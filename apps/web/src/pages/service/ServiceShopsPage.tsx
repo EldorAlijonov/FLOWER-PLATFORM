@@ -1,6 +1,6 @@
 import type { PlatformShop } from '@flower-platform/api-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Copy, MoreHorizontal, Plus, Search } from 'lucide-react';
+import { Copy, LayoutGrid, List, MoreHorizontal, Plus, Search } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ServiceCreateShopModal } from '../../components/service/ServiceCreateShopModal';
@@ -20,6 +20,7 @@ export function ServiceShopsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const createModalOpen = searchParams.get('new') === '1';
+  const viewMode = searchParams.get('view') === 'cards' ? 'cards' : 'table';
   const [openActionsId, setOpenActionsId] = useSearchParamsState('action');
   const [temporaryPassword, setTemporaryPassword] = useStateSecret();
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
@@ -73,11 +74,23 @@ export function ServiceShopsPage() {
   });
 
   function openCreateModal() {
-    setSearchParams({ new: '1' });
+    const next = new URLSearchParams(searchParams);
+    next.set('new', '1');
+    setSearchParams(next);
   }
 
   function closeCreateModal() {
-    setSearchParams({});
+    const next = new URLSearchParams(searchParams);
+    next.delete('new');
+    setSearchParams(next);
+  }
+
+  function setViewMode(nextMode: 'table' | 'cards') {
+    const next = new URLSearchParams(searchParams);
+    if (nextMode === 'cards') next.set('view', 'cards');
+    else next.delete('view');
+    next.delete('action');
+    setSearchParams(next);
   }
 
   function requestAction(action: ConfirmAction) {
@@ -100,8 +113,8 @@ export function ServiceShopsPage() {
     deleteMutation.isPending;
 
   return (
-    <div className="mx-auto max-w-7xl space-y-5">
-      <section className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="mx-auto flex h-[calc(100vh-6.5rem)] max-w-7xl flex-col gap-5">
+      <section className="shrink-0 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-xl font-semibold text-ink-950">Do'konlar</h2>
           <p className="mt-1 text-sm text-ink-500">Platformadagi do'konlar UI skeletoni.</p>
@@ -118,8 +131,9 @@ export function ServiceShopsPage() {
 
       {notice ? <NoticeBanner notice={notice} onClose={() => setNotice(null)} /> : null}
 
-      <section className="rounded-md border border-ink-200 bg-white shadow-sm">
-        <div className="border-b border-ink-200 p-4">
+      <section className="flex min-h-0 flex-1 flex-col rounded-md border border-ink-200 bg-[#fbfdf8] shadow-sm">
+        <div className="shrink-0 border-b border-ink-200 p-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <label className="relative block max-w-md">
             <Search
               aria-hidden="true"
@@ -133,6 +147,33 @@ export function ServiceShopsPage() {
               type="search"
             />
           </label>
+          <div className="inline-flex w-fit rounded-md border border-ink-200 bg-[#eef3ef] p-1">
+            <button
+              className={`inline-flex h-9 items-center gap-2 rounded px-3 text-sm font-semibold ${
+                viewMode === 'table'
+                  ? 'bg-[#fbfdf8] text-ink-950 shadow-sm'
+                  : 'text-ink-600 hover:text-ink-950'
+              }`}
+              onClick={() => setViewMode('table')}
+              type="button"
+            >
+              <List aria-hidden="true" size={16} />
+              Jadval
+            </button>
+            <button
+              className={`inline-flex h-9 items-center gap-2 rounded px-3 text-sm font-semibold ${
+                viewMode === 'cards'
+                  ? 'bg-[#fbfdf8] text-ink-950 shadow-sm'
+                  : 'text-ink-600 hover:text-ink-950'
+              }`}
+              onClick={() => setViewMode('cards')}
+              type="button"
+            >
+              <LayoutGrid aria-hidden="true" size={16} />
+              Card
+            </button>
+          </div>
+          </div>
         </div>
 
         {shopsQuery.isLoading ? <p className="p-4 text-sm text-ink-500">Yuklanmoqda...</p> : null}
@@ -160,12 +201,13 @@ export function ServiceShopsPage() {
         ) : null}
 
         {shopsQuery.data && shopsQuery.data.length > 0 ? (
-          <>
-            <div className="hidden overflow-x-auto md:block">
+          <div className="min-h-0 flex-1 overflow-auto">
+            {viewMode === 'table' ? (
+            <div className="hidden md:block">
               <table className="w-full min-w-[900px] text-left text-sm">
                 <thead className="bg-ink-50 text-xs uppercase text-ink-500">
                   <tr>
-                    <th className="w-16 px-4 py-3 font-medium">№</th>
+                    <th className="w-16 px-4 py-3 font-medium">No.</th>
                     <th className="px-4 py-3 font-medium">Do'kon nomi</th>
                     <th className="px-4 py-3 font-medium">Egasi</th>
                     <th className="px-4 py-3 font-medium">Telefon</th>
@@ -195,6 +237,7 @@ export function ServiceShopsPage() {
                           onToggle={() =>
                             setOpenActionsId(openActionsId === shop.id ? '' : shop.id)
                           }
+                          onClose={() => setOpenActionsId('')}
                           onUnblock={() => requestAction({ type: 'unblock', shop })}
                           open={openActionsId === shop.id}
                           shop={shop}
@@ -205,18 +248,32 @@ export function ServiceShopsPage() {
                 </tbody>
               </table>
             </div>
+            ) : null}
 
-            <div className="divide-y divide-ink-100 md:hidden">
+            <div
+              className={
+                viewMode === 'cards'
+                  ? 'grid gap-4 p-4 sm:grid-cols-2 xl:grid-cols-3'
+                  : 'divide-y divide-ink-100 md:hidden'
+              }
+            >
               {shopsQuery.data.map((shop, index) => (
-                <article className="space-y-3 p-4" key={shop.id}>
+                <article
+                  className={
+                    viewMode === 'cards'
+                      ? 'space-y-4 rounded-md border border-ink-200 bg-[#f8fbf6] p-4 shadow-sm'
+                      : 'space-y-3 p-4'
+                  }
+                  key={shop.id}
+                >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex min-w-0 gap-3">
                       <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-ink-100 text-xs font-semibold text-ink-600">
                         {index + 1}
                       </span>
                       <div className="min-w-0">
-                      <p className="font-semibold text-ink-950">{shop.name}</p>
-                      <p className="mt-1 text-sm text-ink-500">{shop.ownerName}</p>
+                        <p className="font-semibold text-ink-950">{shop.name}</p>
+                        <p className="mt-1 text-sm text-ink-500">{shop.ownerName}</p>
                       </div>
                     </div>
                     <ShopStatusBadge status={shop.status} />
@@ -235,6 +292,7 @@ export function ServiceShopsPage() {
                       onDelete={() => requestAction({ type: 'delete', shop })}
                       onReset={() => requestAction({ type: 'reset', shop })}
                       onToggle={() => setOpenActionsId(openActionsId === shop.id ? '' : shop.id)}
+                      onClose={() => setOpenActionsId('')}
                       onUnblock={() => requestAction({ type: 'unblock', shop })}
                       open={openActionsId === shop.id}
                       shop={shop}
@@ -243,7 +301,7 @@ export function ServiceShopsPage() {
                 </article>
               ))}
             </div>
-          </>
+          </div>
         ) : null}
       </section>
 
@@ -265,7 +323,7 @@ export function ServiceShopsPage() {
             onClick={() => setTemporaryPassword(null)}
             type="button"
           />
-          <section className="relative w-full max-w-md rounded-md border border-ink-200 bg-white p-5 shadow-xl">
+          <section className="relative w-full max-w-md rounded-md border border-ink-200 bg-[#fbfdf8] p-5 shadow-xl">
             <h2 className="text-lg font-semibold text-ink-950">Yangi bir martalik parol</h2>
             <p className="mt-3 text-sm text-ink-500">Bu parol faqat bir marta ko'rsatiladi.</p>
             <div className="mt-4 rounded-md bg-ink-50 p-4">
@@ -310,6 +368,7 @@ function ActionsDropdown({
   shop,
   open,
   onToggle,
+  onClose,
   onBlock,
   onUnblock,
   onReset,
@@ -318,13 +377,14 @@ function ActionsDropdown({
   shop: PlatformShop;
   open: boolean;
   onToggle: () => void;
+  onClose: () => void;
   onBlock: () => void;
   onUnblock: () => void;
   onReset: () => void;
   onDelete: () => void;
 }) {
   return (
-    <div className="relative inline-block text-left">
+    <div className="relative inline-block text-left" onMouseLeave={onClose}>
       <button
         className="flex h-9 w-9 items-center justify-center rounded-md border border-ink-200 text-ink-600 hover:bg-ink-50"
         onClick={onToggle}
@@ -334,7 +394,7 @@ function ActionsDropdown({
         <span className="sr-only">Amallar</span>
       </button>
       {open ? (
-        <div className="absolute right-0 z-20 mt-2 w-64 rounded-md border border-ink-200 bg-white p-1 text-sm shadow-lg">
+        <div className="absolute right-0 z-20 mt-2 w-64 rounded-md border border-ink-200 bg-[#fbfdf8] p-1 text-sm shadow-lg">
           <Link
             className="block rounded px-3 py-2 font-medium text-brand-700 hover:bg-brand-50"
             to={`/service/shops/${shop.id}`}
