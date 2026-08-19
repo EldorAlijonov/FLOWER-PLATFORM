@@ -1,0 +1,16 @@
+{
+  "name": "@flower-platform/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "echo \"Desktop placeholder\"",
+    "build": "echo \"Desktop placeholder\"",
+    "lint": "echo \"Desktop placeholder\"",
+    "test": "echo \"Desktop placeholder\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@flower-platform/api-client": "*",
+    "@flower-platform/types": "*"
+  }
+}

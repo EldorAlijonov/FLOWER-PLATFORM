@@ -1,0 +1,35 @@
+{
+  "name": "flower-platform",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Universal Flower Shop Platform monorepo.",
+  "packageManager": "npm@10.0.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "dev:web": "turbo run dev --filter=@flower-platform/web",
+    "dev:api": "turbo run dev --filter=@flower-platform/api",
+    "dev:bot": "turbo run dev --filter=@flower-platform/bot",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.3.3",
+    "turbo": "^2.0.14",
+    "typescript": "^5.5.4"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "@flower-platform/telegram-shop",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "echo \"Telegram Mini App placeholder\"",
+    "build": "echo \"Telegram Mini App placeholder\"",
+    "lint": "echo \"Telegram Mini App placeholder\"",
+    "test": "echo \"Telegram Mini App placeholder\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@flower-platform/api-client": "*",
+    "@flower-platform/types": "*",
+    "@flower-platform/ui": "*"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "@flower-platform/types",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint src --ext ts",
+    "test": "echo \"No types tests yet\"",
+    "typecheck": "tsc --noEmit"
+  }
+}

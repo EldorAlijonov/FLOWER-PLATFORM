@@ -1,0 +1,21 @@
+{
+  "name": "@flower-platform/bot",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/bot.ts",
+    "build": "tsc",
+    "lint": "eslint src --ext ts",
+    "test": "echo \"No bot tests yet\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@flower-platform/api-client": "*",
+    "grammy": "^1.30.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "tsx": "^4.16.5"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "@flower-platform/validation",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint src --ext ts",
+    "test": "echo \"No validation tests yet\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  }
+}

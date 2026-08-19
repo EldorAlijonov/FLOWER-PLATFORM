@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "allowJs": false,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@flower-platform/types": ["packages/types/src"],
+      "@flower-platform/validation": ["packages/validation/src"],
+      "@flower-platform/domain": ["packages/domain/src"],
+      "@flower-platform/permissions": ["packages/permissions/src"],
+      "@flower-platform/api-client": ["packages/api-client/src"],
+      "@flower-platform/ui": ["packages/ui/src"],
+      "@flower-platform/config": ["packages/config/src"]
+    }
+  }
+}
