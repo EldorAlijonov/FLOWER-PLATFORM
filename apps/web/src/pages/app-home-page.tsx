@@ -9,7 +9,7 @@ type AppHomePageProps = {
 export function AppHomePage({ user, onLogout, loggingOut }: AppHomePageProps) {
   return (
     <main className="min-h-screen bg-ink-100 text-ink-950">
-      <header className="border-b border-ink-200 bg-white">
+      <header className="border-b border-ink-200 bg-[#dfe8df]">
         <div className="grid grid-cols-3" aria-hidden="true">
           <div className="h-1 bg-brand-700" />
           <div className="h-1 bg-petal-600" />
@@ -31,7 +31,7 @@ export function AppHomePage({ user, onLogout, loggingOut }: AppHomePageProps) {
         </div>
       </header>
       <section className="mx-auto max-w-5xl px-4 py-10">
-        <div className="rounded-md border border-ink-200 bg-white p-6 shadow-sm">
+        <div className="rounded-md border border-ink-200 bg-[#dfe8df] p-6 shadow-sm">
           <p className="text-sm font-medium text-brand-700">Do'kon: {user.shopName}</p>
           <h1 className="mt-3 text-2xl font-semibold">Xush kelibsiz, {user.fullName}.</h1>
           <p className="mt-3 text-sm text-ink-600">Shop authentication ishlayapti.</p>

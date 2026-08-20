@@ -9,7 +9,7 @@ type ServiceStatCardProps = {
 
 export function ServiceStatCard({ title, value, subtitle, icon: Icon }: ServiceStatCardProps) {
   return (
-    <article className="rounded-md border border-ink-200 bg-[#fbfdf8] p-4 shadow-sm">
+    <article className="rounded-md border border-ink-200 bg-[#dfe8df] p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm font-medium text-ink-600">{title}</p>

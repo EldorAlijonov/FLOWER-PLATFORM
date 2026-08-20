@@ -30,7 +30,7 @@ export function ServiceLayout({ user, onLogout, loggingOut }: ServiceLayoutProps
   );
 
   return (
-    <div className="h-screen overflow-hidden bg-[#eef3ef] text-ink-950">
+    <div className="h-screen overflow-hidden bg-[#cbd9ce] text-ink-950">
       <div className="fixed inset-y-0 left-0 z-30 hidden lg:block">
         <ServiceSidebar />
       </div>

@@ -1,7 +1,7 @@
 import type { PlatformShop } from '@flower-platform/api-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Copy, LayoutGrid, List, MoreHorizontal, Plus, Search } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ServiceCreateShopModal } from '../../components/service/ServiceCreateShopModal';
 import { ServiceConfirmModal } from '../../components/service/ServiceConfirmModal';
@@ -17,6 +17,7 @@ type ConfirmAction =
 
 type Notice = { tone: 'success' | 'danger'; message: string } | null;
 const SHOPS_PAGE_SIZE = 8;
+const ACTIONS_DROPDOWN_HEIGHT = 220;
 
 export function ServiceShopsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -146,7 +147,7 @@ export function ServiceShopsPage() {
 
       {notice ? <NoticeBanner notice={notice} onClose={() => setNotice(null)} /> : null}
 
-      <section className="flex min-h-0 flex-1 flex-col rounded-md border border-ink-200 bg-[#fbfdf8] shadow-sm">
+      <section className="flex min-h-0 flex-1 flex-col rounded-md border border-ink-200 bg-[#dfe8df] shadow-sm">
         <div className="shrink-0 border-b border-ink-200 p-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <label className="relative block max-w-md">
@@ -157,16 +158,16 @@ export function ServiceShopsPage() {
             />
             <span className="sr-only">Qidirish</span>
             <input
-              className="h-10 w-full rounded-md border border-ink-200 bg-ink-50 pl-10 pr-3 text-sm outline-none focus:border-brand-600 focus:bg-white focus:ring-4 focus:ring-brand-100"
+              className="h-10 w-full rounded-md border border-ink-200 bg-ink-50 pl-10 pr-3 text-sm outline-none focus:border-brand-600 focus:bg-[#dfe8df] focus:ring-4 focus:ring-brand-100"
               placeholder="Qidirish..."
               type="search"
             />
           </label>
-          <div className="inline-flex w-fit rounded-md border border-ink-200 bg-[#eef3ef] p-1">
+          <div className="inline-flex w-fit rounded-md border border-ink-200 bg-[#cbd9ce] p-1">
             <button
               className={`inline-flex h-9 items-center gap-2 rounded px-3 text-sm font-semibold ${
                 viewMode === 'table'
-                  ? 'bg-[#fbfdf8] text-ink-950 shadow-sm'
+                  ? 'bg-[#dfe8df] text-ink-950 shadow-sm'
                   : 'text-ink-600 hover:text-ink-950'
               }`}
               onClick={() => setViewMode('table')}
@@ -178,7 +179,7 @@ export function ServiceShopsPage() {
             <button
               className={`inline-flex h-9 items-center gap-2 rounded px-3 text-sm font-semibold ${
                 viewMode === 'cards'
-                  ? 'bg-[#fbfdf8] text-ink-950 shadow-sm'
+                  ? 'bg-[#dfe8df] text-ink-950 shadow-sm'
                   : 'text-ink-600 hover:text-ink-950'
               }`}
               onClick={() => setViewMode('cards')}
@@ -278,7 +279,7 @@ export function ServiceShopsPage() {
                 <article
                   className={
                     viewMode === 'cards'
-                      ? 'space-y-4 rounded-md border border-ink-200 bg-[#f8fbf6] p-4 shadow-sm transition hover:border-brand-200 hover:bg-[#f2f7f1] hover:shadow-md'
+                      ? 'space-y-4 rounded-md border border-ink-200 bg-[#d7e2d9] p-4 shadow-sm transition hover:border-brand-200 hover:bg-[#f2f7f1] hover:shadow-md'
                       : 'space-y-3 p-4 transition hover:bg-[#f2f7f1]'
                   }
                   key={shop.id}
@@ -348,7 +349,7 @@ export function ServiceShopsPage() {
             onClick={() => setTemporaryPassword(null)}
             type="button"
           />
-          <section className="relative w-full max-w-md rounded-md border border-ink-200 bg-[#fbfdf8] p-5 shadow-xl">
+          <section className="relative w-full max-w-md rounded-md border border-ink-200 bg-[#dfe8df] p-5 shadow-xl">
             <h2 className="text-lg font-semibold text-ink-950">Yangi bir martalik parol</h2>
             <p className="mt-3 text-sm text-ink-500">Bu parol faqat bir marta ko'rsatiladi.</p>
             <div className="mt-4 rounded-md bg-ink-50 p-4">
@@ -413,11 +414,27 @@ function ActionsDropdown({
   onReset: () => void;
   onDelete: () => void;
 }) {
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [openUp, setOpenUp] = useState(false);
+
+  function handleToggle() {
+    const rect = buttonRef.current?.getBoundingClientRect();
+
+    if (rect) {
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      setOpenUp(spaceBelow < ACTIONS_DROPDOWN_HEIGHT && spaceAbove > spaceBelow);
+    }
+
+    onToggle();
+  }
+
   return (
     <div className="relative inline-block text-left">
       <button
+        ref={buttonRef}
         className="flex h-9 w-9 items-center justify-center rounded-md border border-ink-200 text-ink-600 hover:bg-ink-50"
-        onClick={onToggle}
+        onClick={handleToggle}
         type="button"
       >
         <MoreHorizontal aria-hidden="true" size={18} />
@@ -425,7 +442,9 @@ function ActionsDropdown({
       </button>
       {open ? (
         <div
-          className="absolute right-0 z-20 mt-2 w-64 rounded-md border border-ink-200 bg-[#fbfdf8] p-1 text-sm shadow-lg"
+          className={`absolute right-0 z-20 w-64 rounded-md border border-ink-200 bg-[#dfe8df] p-1 text-sm shadow-lg ${
+            openUp ? 'bottom-full mb-2' : 'mt-2'
+          }`}
           onMouseLeave={onClose}
         >
           <Link

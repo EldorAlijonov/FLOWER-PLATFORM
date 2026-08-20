@@ -67,7 +67,7 @@ export function ChangePasswordPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-ink-100 px-4 py-8 text-ink-950">
-      <section className="w-full max-w-md rounded-md border border-ink-200 bg-white shadow-sm">
+      <section className="w-full max-w-md rounded-md border border-ink-200 bg-[#dfe8df] shadow-sm">
         <div className="grid grid-cols-3" aria-hidden="true">
           <div className="h-1 bg-brand-700" />
           <div className="h-1 bg-petal-600" />
@@ -142,7 +142,7 @@ function PasswordField({ label, value, show, error, onChange, onToggle }: Passwo
     <div>
       <label className="text-sm font-medium text-ink-700">{label}</label>
       <div
-        className={`mt-2 flex rounded-md border bg-ink-50 focus-within:bg-white focus-within:ring-4 ${
+        className={`mt-2 flex rounded-md border bg-ink-50 focus-within:bg-[#dfe8df] focus-within:ring-4 ${
           error
             ? 'border-petal-600 focus-within:border-petal-600 focus-within:ring-petal-100'
             : 'border-ink-200 focus-within:border-brand-600 focus-within:ring-brand-100'

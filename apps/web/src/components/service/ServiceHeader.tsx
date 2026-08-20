@@ -17,11 +17,11 @@ export function ServiceHeader({
   onOpenSidebar,
 }: ServiceHeaderProps) {
   return (
-    <header className="sticky top-0 z-20 border-b border-ink-200 bg-[#f8fbf6]">
+    <header className="sticky top-0 z-20 border-b border-ink-200 bg-[#d7e2d9]">
       <div className="flex min-h-16 items-center justify-between gap-3 px-4 py-3 sm:px-6">
         <div className="flex min-w-0 items-center gap-3">
           <button
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-ink-200 text-ink-700 hover:bg-[#eef3ef] lg:hidden"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-ink-200 text-ink-700 hover:bg-[#cbd9ce] lg:hidden"
             onClick={onOpenSidebar}
             title="Menyuni ochish"
             type="button"
@@ -41,7 +41,7 @@ export function ServiceHeader({
             <p className="text-xs text-ink-500">Platform Admin</p>
           </div>
           <button
-            className="flex h-10 items-center gap-2 rounded-md border border-ink-200 px-3 text-sm font-medium text-ink-700 hover:bg-[#eef3ef] disabled:cursor-not-allowed disabled:opacity-70"
+            className="flex h-10 items-center gap-2 rounded-md border border-ink-200 px-3 text-sm font-medium text-ink-700 hover:bg-[#cbd9ce] disabled:cursor-not-allowed disabled:opacity-70"
             disabled={loggingOut}
             onClick={onLogout}
             type="button"

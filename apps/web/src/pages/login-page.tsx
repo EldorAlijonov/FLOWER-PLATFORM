@@ -110,15 +110,15 @@ export function AuthShell(props: AuthShellProps) {
           </div>
 
           <div className="grid grid-cols-3 gap-3 text-sm">
-            <div className="rounded-md border border-white/15 bg-white/10 p-4">
+            <div className="rounded-md border border-white/15 bg-[#dfe8df]/10 p-4">
               <p className="text-2xl font-semibold">2</p>
               <p className="mt-1 text-brand-100">login turi</p>
             </div>
-            <div className="rounded-md border border-white/15 bg-white/10 p-4">
+            <div className="rounded-md border border-white/15 bg-[#dfe8df]/10 p-4">
               <p className="text-2xl font-semibold">1</p>
               <p className="mt-1 text-brand-100">shop kontekst</p>
             </div>
-            <div className="rounded-md border border-white/15 bg-white/10 p-4">
+            <div className="rounded-md border border-white/15 bg-[#dfe8df]/10 p-4">
               <p className="text-2xl font-semibold">7</p>
               <p className="mt-1 text-brand-100">kunlik session</p>
             </div>
@@ -127,7 +127,7 @@ export function AuthShell(props: AuthShellProps) {
 
         <section className="flex items-center justify-center bg-brand-950 px-5 py-10 sm:px-8 lg:bg-ink-50">
           <div className="w-full max-w-md">
-            <div className="mb-4 rounded-md border border-white/15 bg-white/10 p-4 text-white lg:hidden">
+            <div className="mb-4 rounded-md border border-white/15 bg-[#dfe8df]/10 p-4 text-white lg:hidden">
               <p className="text-sm font-semibold text-brand-100">Lola Gullari</p>
               <p className="mt-1 text-xs text-brand-200">Universal Flower Shop Platform</p>
               <div className="mt-5 grid grid-cols-3 gap-2" aria-hidden="true">
@@ -137,7 +137,7 @@ export function AuthShell(props: AuthShellProps) {
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-md border border-ink-200 bg-white shadow-sm ring-1 ring-brand-100">
+            <div className="overflow-hidden rounded-md border border-ink-200 bg-[#dfe8df] shadow-sm ring-1 ring-brand-100">
               <div className="grid grid-cols-3" aria-hidden="true">
                 <div className="h-2 bg-brand-700" />
                 <div className="h-2 bg-petal-600" />
@@ -154,7 +154,7 @@ export function AuthShell(props: AuthShellProps) {
                     </label>
                     <input
                       autoComplete="username"
-                      className={`mt-2 h-11 w-full rounded-md border bg-ink-50 px-3 text-sm text-ink-950 outline-none transition focus:bg-white focus:ring-4 ${
+                      className={`mt-2 h-11 w-full rounded-md border bg-ink-50 px-3 text-sm text-ink-950 outline-none transition focus:bg-[#dfe8df] focus:ring-4 ${
                         loginHasError
                           ? 'border-petal-600 focus:border-petal-600 focus:ring-petal-100'
                           : 'border-ink-200 focus:border-brand-600 focus:ring-brand-100'
@@ -171,7 +171,7 @@ export function AuthShell(props: AuthShellProps) {
                       Parol
                     </label>
                     <div
-                      className={`mt-2 flex rounded-md border bg-ink-50 focus-within:bg-white focus-within:ring-4 ${
+                      className={`mt-2 flex rounded-md border bg-ink-50 focus-within:bg-[#dfe8df] focus-within:ring-4 ${
                         passwordHasError
                           ? 'border-petal-600 focus-within:border-petal-600 focus-within:ring-petal-100'
                           : 'border-ink-200 focus-within:border-brand-600 focus-within:ring-brand-100'

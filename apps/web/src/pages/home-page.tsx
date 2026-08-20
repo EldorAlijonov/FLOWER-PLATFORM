@@ -51,13 +51,13 @@ export function HomePage() {
   if (dashboardQuery.isLoading) {
     return (
       <section className="space-y-6 p-4 sm:p-6">
-        <div className="h-28 animate-pulse rounded-md bg-white" />
+        <div className="h-28 animate-pulse rounded-md bg-[#dfe8df]" />
         <div className="grid gap-4 md:grid-cols-4">
           {Array.from({ length: 4 }).map((_, index) => (
-            <div className="h-28 animate-pulse rounded-md bg-white" key={index} />
+            <div className="h-28 animate-pulse rounded-md bg-[#dfe8df]" key={index} />
           ))}
         </div>
-        <div className="h-96 animate-pulse rounded-md bg-white" />
+        <div className="h-96 animate-pulse rounded-md bg-[#dfe8df]" />
       </section>
     );
   }
@@ -76,7 +76,7 @@ export function HomePage() {
 
   return (
     <section className="space-y-6 p-4 sm:p-6">
-      <div className="rounded-md border border-ink-200 bg-white p-5">
+      <div className="rounded-md border border-ink-200 bg-[#dfe8df] p-5">
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <div>
             <p className="text-sm font-medium text-brand-700">{dashboard.shop.name}</p>
@@ -110,7 +110,7 @@ export function HomePage() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.4fr_0.9fr]">
-        <section className="rounded-md border border-ink-200 bg-white">
+        <section className="rounded-md border border-ink-200 bg-[#dfe8df]">
           <div className="flex items-center justify-between border-b border-ink-200 p-4">
             <h2 className="text-base font-semibold">Jonli buyurtmalar</h2>
             <button className="rounded-md border border-ink-200 px-3 py-2 text-sm font-medium text-ink-700 hover:bg-ink-50">
@@ -149,7 +149,7 @@ export function HomePage() {
           </div>
         </section>
 
-        <section className="rounded-md border border-ink-200 bg-white">
+        <section className="rounded-md border border-ink-200 bg-[#dfe8df]">
           <div className="flex items-center justify-between border-b border-ink-200 p-4">
             <h2 className="text-base font-semibold">Ombor</h2>
             <button className="rounded-md border border-ink-200 px-3 py-2 text-sm font-medium text-ink-700 hover:bg-ink-50">

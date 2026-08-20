@@ -47,7 +47,7 @@ export function ServiceCreateShopModal({ open, onClose }: ServiceCreateShopModal
         onClick={onClose}
         type="button"
       />
-      <section className="relative max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-md border border-ink-200 bg-[#fbfdf8] shadow-xl">
+      <section className="relative max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-md border border-ink-200 bg-[#dfe8df] shadow-xl">
         <div className="flex items-start justify-between gap-3 border-b border-ink-200 px-4 py-4 sm:px-5">
           <div className="min-w-0">
             <h2 className="text-lg font-semibold text-ink-950">Yangi do'kon</h2>

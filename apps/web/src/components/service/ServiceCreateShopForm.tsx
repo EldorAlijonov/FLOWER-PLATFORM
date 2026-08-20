@@ -93,7 +93,7 @@ export function ServiceCreateShopForm({ firstInputRef, onSuccess }: ServiceCreat
           <p className="font-semibold">Do'kon muvaffaqiyatli yaratildi.</p>
           <p className="mt-2">Bu ma'lumot faqat bir marta ko'rsatiladi.</p>
         </div>
-        <div className="rounded-md border border-ink-200 bg-[#f8fbf6] p-4">
+        <div className="rounded-md border border-ink-200 bg-[#d7e2d9] p-4">
           <div className="grid gap-3 text-sm sm:grid-cols-2">
             <div>
               <p className="text-ink-500">Login</p>
@@ -170,7 +170,7 @@ export function ServiceCreateShopForm({ firstInputRef, onSuccess }: ServiceCreat
             Tarif
           </label>
           <select
-            className={`mt-2 h-10 w-full rounded-md border bg-ink-50 px-3 text-sm text-ink-950 outline-none focus:bg-white focus:ring-4 ${
+            className={`mt-2 h-10 w-full rounded-md border bg-ink-50 px-3 text-sm text-ink-950 outline-none focus:bg-[#dfe8df] focus:ring-4 ${
               fieldErrors.plan
                 ? 'border-petal-600 focus:border-petal-600 focus:ring-petal-100'
                 : 'border-ink-200 focus:border-brand-600 focus:ring-brand-100'
@@ -226,7 +226,7 @@ function Field({ label, name, value, onChange, error, type = 'text', inputRef }:
         {label}
       </label>
       <input
-        className={`mt-2 h-10 w-full rounded-md border bg-ink-50 px-3 text-sm text-ink-950 outline-none focus:bg-white focus:ring-4 ${
+        className={`mt-2 h-10 w-full rounded-md border bg-ink-50 px-3 text-sm text-ink-950 outline-none focus:bg-[#dfe8df] focus:ring-4 ${
           error
             ? 'border-petal-600 focus:border-petal-600 focus:ring-petal-100'
             : 'border-ink-200 focus:border-brand-600 focus:ring-brand-100'

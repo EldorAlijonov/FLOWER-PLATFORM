@@ -5,7 +5,7 @@ export function AppLayout() {
 
   return (
     <div className="min-h-screen bg-ink-100 text-ink-950">
-      <aside className="fixed inset-y-0 left-0 hidden w-64 border-r border-ink-200 bg-white lg:block">
+      <aside className="fixed inset-y-0 left-0 hidden w-64 border-r border-ink-200 bg-[#dfe8df] lg:block">
         <div className="h-1.5 bg-brand-700" />
         <div className="flex h-16 items-center border-b border-ink-200 px-6">
           <div>
@@ -30,7 +30,7 @@ export function AppLayout() {
         </nav>
       </aside>
       <div className="lg:pl-64">
-        <header className="sticky top-0 z-10 border-b border-ink-200 bg-white">
+        <header className="sticky top-0 z-10 border-b border-ink-200 bg-[#dfe8df]">
           <div className="grid grid-cols-3" aria-hidden="true">
             <div className="h-1 bg-brand-700" />
             <div className="h-1 bg-petal-600" />

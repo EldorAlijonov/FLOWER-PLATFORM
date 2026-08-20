@@ -27,7 +27,7 @@ export function ServiceAuditPage() {
         <p className="mt-1 text-sm text-ink-500">Service Panel amallari audit loglari.</p>
       </section>
 
-      <section className="flex min-h-0 flex-1 flex-col rounded-md border border-ink-200 bg-[#fbfdf8] shadow-sm">
+      <section className="flex min-h-0 flex-1 flex-col rounded-md border border-ink-200 bg-[#dfe8df] shadow-sm">
         {auditQuery.isLoading ? <p className="p-4 text-sm text-ink-500">Yuklanmoqda...</p> : null}
         {auditQuery.isError ? (
           <p className="p-4 text-sm text-petal-700">Audit tarixini yuklab bo'lmadi.</p>
