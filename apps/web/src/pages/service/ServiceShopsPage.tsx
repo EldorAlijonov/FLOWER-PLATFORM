@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ServiceCreateShopModal } from '../../components/service/ServiceCreateShopModal';
 import { ServiceConfirmModal } from '../../components/service/ServiceConfirmModal';
+import { ServicePagination } from '../../components/service/ServicePagination';
 import { ShopStatusBadge } from '../../components/service/ShopStatusBadge';
 import { apiClient } from '../../lib/api-client';
 
@@ -15,12 +16,14 @@ type ConfirmAction =
   | { type: 'delete'; shop: PlatformShop };
 
 type Notice = { tone: 'success' | 'danger'; message: string } | null;
+const SHOPS_PAGE_SIZE = 8;
 
 export function ServiceShopsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const createModalOpen = searchParams.get('new') === '1';
   const viewMode = searchParams.get('view') === 'cards' ? 'cards' : 'table';
+  const currentPage = getPageParam(searchParams);
   const [openActionsId, setOpenActionsId] = useSearchParamsState('action');
   const [temporaryPassword, setTemporaryPassword] = useStateSecret();
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
@@ -90,6 +93,14 @@ export function ServiceShopsPage() {
     if (nextMode === 'cards') next.set('view', 'cards');
     else next.delete('view');
     next.delete('action');
+    next.set('page', '1');
+    setSearchParams(next);
+  }
+
+  function setCurrentPage(nextPage: number) {
+    const next = new URLSearchParams(searchParams);
+    next.set('page', String(nextPage));
+    next.delete('action');
     setSearchParams(next);
   }
 
@@ -111,6 +122,10 @@ export function ServiceShopsPage() {
     unblockMutation.isPending ||
     resetMutation.isPending ||
     deleteMutation.isPending;
+  const shops = shopsQuery.data ?? [];
+  const totalShopPages = Math.max(1, Math.ceil(shops.length / SHOPS_PAGE_SIZE));
+  const page = Math.min(currentPage, totalShopPages);
+  const paginatedShops = shops.slice((page - 1) * SHOPS_PAGE_SIZE, page * SHOPS_PAGE_SIZE);
 
   return (
     <div className="mx-auto flex h-[calc(100vh-6.5rem)] max-w-7xl flex-col gap-5">
@@ -200,7 +215,7 @@ export function ServiceShopsPage() {
           </div>
         ) : null}
 
-        {shopsQuery.data && shopsQuery.data.length > 0 ? (
+        {shops.length > 0 ? (
           <div className="min-h-0 flex-1 overflow-auto">
             {viewMode === 'table' ? (
             <div className="hidden md:block">
@@ -218,9 +233,11 @@ export function ServiceShopsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-ink-100">
-                  {shopsQuery.data.map((shop, index) => (
+                  {paginatedShops.map((shop, index) => (
                     <tr className="transition hover:bg-[#f2f7f1]" key={shop.id}>
-                      <td className="px-4 py-4 font-medium text-ink-500">{index + 1}</td>
+                      <td className="px-4 py-4 font-medium text-ink-500">
+                        {(page - 1) * SHOPS_PAGE_SIZE + index + 1}
+                      </td>
                       <td className="px-4 py-4 font-semibold text-ink-950">{shop.name}</td>
                       <td className="px-4 py-4 text-ink-600">{shop.ownerName}</td>
                       <td className="px-4 py-4 text-ink-600">{shop.phone}</td>
@@ -257,7 +274,7 @@ export function ServiceShopsPage() {
                   : 'divide-y divide-ink-100 md:hidden'
               }
             >
-              {shopsQuery.data.map((shop, index) => (
+              {paginatedShops.map((shop, index) => (
                 <article
                   className={
                     viewMode === 'cards'
@@ -269,7 +286,7 @@ export function ServiceShopsPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex min-w-0 gap-3">
                       <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-ink-100 text-xs font-semibold text-ink-600">
-                        {index + 1}
+                        {(page - 1) * SHOPS_PAGE_SIZE + index + 1}
                       </span>
                       <div className="min-w-0">
                         <p className="font-semibold text-ink-950">{shop.name}</p>
@@ -302,6 +319,14 @@ export function ServiceShopsPage() {
               ))}
             </div>
           </div>
+        ) : null}
+        {!shopsQuery.isLoading && !shopsQuery.isError ? (
+          <ServicePagination
+            onPageChange={setCurrentPage}
+            page={page}
+            pageSize={SHOPS_PAGE_SIZE}
+            totalItems={shops.length}
+          />
         ) : null}
       </section>
 
@@ -362,6 +387,11 @@ export function ServiceShopsPage() {
 
 function formatDate(value: string) {
   return new Date(value).toLocaleDateString('uz-UZ');
+}
+
+function getPageParam(searchParams: URLSearchParams) {
+  const page = Number(searchParams.get('page') ?? '1');
+  return Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
 }
 
 function ActionsDropdown({

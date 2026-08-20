@@ -1,10 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 import { AlertTriangle, CreditCard, Store, StoreIcon } from 'lucide-react';
+import { useState } from 'react';
+import { ServicePagination } from '../../components/service/ServicePagination';
 import { ServiceStatCard } from '../../components/service/ServiceStatCard';
 import { ShopStatusBadge } from '../../components/service/ShopStatusBadge';
 import { apiClient } from '../../lib/api-client';
 
+const RECENT_SHOPS_PAGE_SIZE = 5;
+
 export function ServiceDashboardPage() {
+  const [recentPage, setRecentPage] = useState(1);
   const dashboardQuery = useQuery({
     queryKey: ['platform-dashboard'],
     queryFn: () => apiClient.platformDashboard.get(),
@@ -49,6 +54,13 @@ export function ServiceDashboardPage() {
       icon: CreditCard,
     },
   ];
+  const recentShops = dashboardQuery.data.recentShops;
+  const recentTotalPages = Math.max(1, Math.ceil(recentShops.length / RECENT_SHOPS_PAGE_SIZE));
+  const currentRecentPage = Math.min(recentPage, recentTotalPages);
+  const paginatedRecentShops = recentShops.slice(
+    (currentRecentPage - 1) * RECENT_SHOPS_PAGE_SIZE,
+    currentRecentPage * RECENT_SHOPS_PAGE_SIZE,
+  );
 
   return (
     <div className="mx-auto max-w-7xl space-y-5">
@@ -64,12 +76,14 @@ export function ServiceDashboardPage() {
           <p className="mt-1 text-sm text-ink-500">Real database ma'lumotlari.</p>
         </div>
         <div className="divide-y divide-ink-100">
-          {dashboardQuery.data.recentShops.map((shop, index) => (
+          {paginatedRecentShops.map((shop, index) => (
             <div
               className="grid gap-3 px-4 py-4 text-sm transition hover:bg-[#f2f7f1] sm:grid-cols-[3rem_1.4fr_0.8fr_0.8fr_0.7fr] sm:items-center sm:px-5"
               key={shop.id}
             >
-              <span className="font-medium text-ink-500">{index + 1}</span>
+              <span className="font-medium text-ink-500">
+                {(currentRecentPage - 1) * RECENT_SHOPS_PAGE_SIZE + index + 1}
+              </span>
               <div>
                 <p className="font-semibold text-ink-950">{shop.name}</p>
                 <p className="mt-1 text-xs text-ink-500">{shop.ownerName}</p>
@@ -83,6 +97,12 @@ export function ServiceDashboardPage() {
             <p className="p-4 text-sm text-ink-500">Hozircha do'konlar mavjud emas.</p>
           ) : null}
         </div>
+        <ServicePagination
+          onPageChange={setRecentPage}
+          page={currentRecentPage}
+          pageSize={RECENT_SHOPS_PAGE_SIZE}
+          totalItems={recentShops.length}
+        />
       </section>
     </div>
   );
