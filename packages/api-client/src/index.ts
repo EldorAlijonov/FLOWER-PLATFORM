@@ -59,12 +59,23 @@ export type PlatformProfiles = {
 };
 
 export type ShopPlan = 'START' | 'BUSINESS' | 'PRO';
-export type ShopStatus = 'ACTIVE' | 'BLOCKED';
+export type ShopStatus = 'ACTIVE' | 'BLOCKED' | 'ARCHIVED';
+
+export type PaginatedResponse<T> = {
+  items: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+};
 
 export type PlatformShop = {
   id: string;
   name: string;
   ownerName: string;
+  ownerLogin: string | null;
   phone: string;
   plan: ShopPlan;
   status: ShopStatus;
@@ -82,6 +93,7 @@ export type PlatformShopDetail = PlatformShop & {
     mustChangePassword: boolean;
     lastLoginAt: string | null;
   } | null;
+  recentAudit: PlatformAuditLog[];
 };
 
 export type CreatePlatformShopBody = {
@@ -132,6 +144,15 @@ export type PlatformAuditLog = {
   actor: string;
   shop: { id: string; name: string } | null;
   description: string;
+};
+
+export type ListPlatformShopsQuery = {
+  page?: number;
+  limit?: number;
+  q?: string;
+  status?: ShopStatus;
+  plan?: ShopPlan;
+  sort?: 'created_desc' | 'created_asc' | 'name_asc' | 'name_desc';
 };
 
 type LoginBody = {
@@ -205,8 +226,10 @@ export function createApiClient(options: ApiClientOptions) {
     },
 
     platformShops: {
-      list(): Promise<PlatformShop[]> {
-        return createApiClient(options).request('/v1/platform/shops');
+      list(query: ListPlatformShopsQuery = {}): Promise<PaginatedResponse<PlatformShop>> {
+        return createApiClient(options).request(
+          `/v1/platform/shops${toQueryString(query as Record<string, string | number | undefined>)}`,
+        );
       },
       get(id: string): Promise<PlatformShopDetail> {
         return createApiClient(options).request(`/v1/platform/shops/${id}`);
@@ -241,6 +264,11 @@ export function createApiClient(options: ApiClientOptions) {
       delete(id: string): Promise<{ ok: true }> {
         return createApiClient(options).request(`/v1/platform/shops/${id}`, { method: 'DELETE' });
       },
+      archive(id: string): Promise<{ ok: true }> {
+        return createApiClient(options).request(`/v1/platform/shops/${id}/archive`, {
+          method: 'POST',
+        });
+      },
     },
 
     platformDashboard: {
@@ -255,4 +283,17 @@ export function createApiClient(options: ApiClientOptions) {
       },
     },
   };
+}
+
+function toQueryString(query: Record<string, string | number | undefined>) {
+  const params = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(query)) {
+    if (value !== undefined && value !== '') {
+      params.set(key, String(value));
+    }
+  }
+
+  const value = params.toString();
+  return value ? `?${value}` : '';
 }

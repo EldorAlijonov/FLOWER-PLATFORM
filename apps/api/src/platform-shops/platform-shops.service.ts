@@ -3,7 +3,11 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { Prisma } from '@prisma/client';
 import { PasswordService } from '../auth/password.service';
 import { PrismaService } from '../database/prisma.service';
-import type { CreatePlatformShopInput, UpdatePlatformShopInput } from './platform-shops.dto';
+import type {
+  CreatePlatformShopInput,
+  ListPlatformShopsQuery,
+  UpdatePlatformShopInput,
+} from './platform-shops.dto';
 
 @Injectable()
 export class PlatformShopsService {
@@ -14,11 +18,16 @@ export class PlatformShopsService {
 
   async getDashboard() {
     const [totalShops, activeShops, blockedShops, planGroups, recentShops] = await Promise.all([
-      this.prisma.shop.count(),
+      this.prisma.shop.count({ where: { status: { not: 'ARCHIVED' } } }),
       this.prisma.shop.count({ where: { status: 'ACTIVE' } }),
       this.prisma.shop.count({ where: { status: 'BLOCKED' } }),
-      this.prisma.shop.groupBy({ by: ['plan'], _count: { id: true } }),
+      this.prisma.shop.groupBy({
+        by: ['plan'],
+        where: { status: { not: 'ARCHIVED' } },
+        _count: { id: true },
+      }),
       this.prisma.shop.findMany({
+        where: { status: { not: 'ARCHIVED' } },
         orderBy: { createdAt: 'desc' },
         take: 5,
         select: this.shopListSelect(),
@@ -65,13 +74,29 @@ export class PlatformShopsService {
     }));
   }
 
-  async listShops() {
-    const shops = await this.prisma.shop.findMany({
-      orderBy: { createdAt: 'desc' },
-      select: this.shopListSelect(),
-    });
+  async listShops(query: ListPlatformShopsQuery) {
+    const where = this.shopListWhere(query);
+    const orderBy = this.shopListOrderBy(query.sort);
+    const [total, shops] = await Promise.all([
+      this.prisma.shop.count({ where }),
+      this.prisma.shop.findMany({
+        where,
+        orderBy,
+        skip: (query.page - 1) * query.limit,
+        take: query.limit,
+        select: this.shopListSelect(),
+      }),
+    ]);
 
-    return shops.map(this.serializeShop);
+    return {
+      items: shops.map(this.serializeShop),
+      pagination: {
+        page: query.page,
+        limit: query.limit,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / query.limit)),
+      },
+    };
   }
 
   async getShop(id: string) {
@@ -94,6 +119,20 @@ export class PlatformShopsService {
             mustChangePassword: true,
           },
         },
+        auditLogs: {
+          orderBy: { createdAt: 'desc' },
+          take: 5,
+          select: {
+            id: true,
+            action: true,
+            entity: true,
+            createdAt: true,
+            metadata: true,
+            shop: { select: { id: true, name: true } },
+            platformUser: { select: { id: true, login: true } },
+            user: { select: { id: true, login: true, fullName: true } },
+          },
+        },
       },
     });
 
@@ -112,6 +151,15 @@ export class PlatformShopsService {
             lastLoginAt: owner.lastLoginAt?.toISOString() ?? null,
           }
         : null,
+      recentAudit: shop.auditLogs.map((log) => ({
+        id: log.id,
+        action: log.action,
+        entity: log.entity,
+        createdAt: log.createdAt.toISOString(),
+        actor: log.platformUser?.login ?? log.user?.fullName ?? log.user?.login ?? 'System',
+        shop: log.shop ? { id: log.shop.id, name: log.shop.name } : null,
+        description: this.auditDescription(log.action, log.metadata),
+      })),
     };
   }
 
@@ -272,7 +320,7 @@ export class PlatformShopsService {
     };
   }
 
-  async deleteShop(id: string, platformUserId: string) {
+  async archiveShop(id: string, platformUserId: string) {
     const shop = await this.ensureShopExists(id);
 
     await this.prisma.$transaction(async (tx) => {
@@ -287,27 +335,22 @@ export class PlatformShopsService {
           where: { userId: { in: userIds }, status: 'ACTIVE' },
           data: { status: 'REVOKED', revokedAt: new Date() },
         });
-        await tx.auditLog.updateMany({
-          where: { userId: { in: userIds } },
-          data: { userId: null },
-        });
       }
 
-      await tx.auditLog.updateMany({
-        where: { shopId: id },
-        data: { shopId: null },
-      });
+      await tx.shop.update({ where: { id }, data: { status: 'ARCHIVED' } });
       await this.recordAudit(tx, {
-        action: 'SHOP_DELETED',
-        shopId: null,
+        action: 'SHOP_ARCHIVED',
+        shopId: id,
         platformUserId,
-        metadata: { deletedShopId: id, shopName: shop.name },
+        metadata: { shopName: shop.name },
       });
-      await tx.user.deleteMany({ where: { shopId: id } });
-      await tx.shop.delete({ where: { id } });
     });
 
     return { ok: true };
+  }
+
+  async deleteShop(id: string, platformUserId: string) {
+    return this.archiveShop(id, platformUserId);
   }
 
   private async assertLoginAvailable(login: string) {
@@ -357,6 +400,12 @@ export class PlatformShopsService {
       plan: true,
       status: true,
       createdAt: true,
+      users: {
+        where: { role: 'OWNER' },
+        orderBy: { createdAt: 'asc' },
+        take: 1,
+        select: { login: true },
+      },
     } satisfies Prisma.ShopSelect;
   }
 
@@ -380,11 +429,52 @@ export class PlatformShopsService {
     plan: string;
     status: string;
     createdAt: Date;
+    users?: Array<{ login: string }>;
   }) {
     return {
-      ...shop,
+      id: shop.id,
+      name: shop.name,
+      ownerName: shop.ownerName,
+      ownerLogin: shop.users?.[0]?.login ?? null,
+      phone: shop.phone,
+      plan: shop.plan,
+      status: shop.status,
       createdAt: shop.createdAt.toISOString(),
     };
+  }
+
+  private shopListWhere(query: ListPlatformShopsQuery): Prisma.ShopWhereInput {
+    const filters: Prisma.ShopWhereInput[] = [];
+
+    if (query.status) {
+      filters.push({ status: query.status });
+    } else {
+      filters.push({ status: { not: 'ARCHIVED' } });
+    }
+
+    if (query.plan) {
+      filters.push({ plan: query.plan });
+    }
+
+    if (query.q) {
+      filters.push({
+        OR: [
+          { name: { contains: query.q, mode: 'insensitive' } },
+          { ownerName: { contains: query.q, mode: 'insensitive' } },
+          { phone: { contains: query.q, mode: 'insensitive' } },
+          { users: { some: { login: { contains: query.q, mode: 'insensitive' } } } },
+        ],
+      });
+    }
+
+    return { AND: filters };
+  }
+
+  private shopListOrderBy(sort: ListPlatformShopsQuery['sort']): Prisma.ShopOrderByWithRelationInput {
+    if (sort === 'created_asc') return { createdAt: 'asc' };
+    if (sort === 'name_asc') return { name: 'asc' };
+    if (sort === 'name_desc') return { name: 'desc' };
+    return { createdAt: 'desc' };
   }
 
   private async recordAudit(
@@ -417,7 +507,7 @@ export class PlatformShopsService {
     if (action === 'SHOP_BLOCKED') return `${shopName} bloklandi.`;
     if (action === 'SHOP_UNBLOCKED') return `${shopName} blokdan chiqarildi.`;
     if (action === 'OWNER_PASSWORD_RESET') return `${shopName} owner paroli reset qilindi.`;
-    if (action === 'SHOP_DELETED') return `${shopName} o'chirildi.`;
+    if (action === 'SHOP_ARCHIVED') return `${shopName} arxivlandi.`;
 
     return action;
   }

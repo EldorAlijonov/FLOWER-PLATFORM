@@ -8,7 +8,7 @@ import { ShopStatusBadge } from '../../components/service/ShopStatusBadge';
 import { apiClient } from '../../lib/api-client';
 
 type FieldErrors = Partial<Record<keyof UpdatePlatformShopBody, string>>;
-type ConfirmAction = 'block' | 'unblock' | 'reset' | 'delete' | null;
+type ConfirmAction = 'block' | 'unblock' | 'reset' | 'archive' | null;
 type Notice = { tone: 'success' | 'danger'; message: string } | null;
 
 export function ServiceShopDetailPage() {
@@ -86,14 +86,14 @@ export function ServiceShopDetailPage() {
     onError: () => setNotice({ tone: 'danger', message: "Owner parolini reset qilib bo'lmadi." }),
   });
   const deleteMutation = useMutation({
-    mutationFn: () => apiClient.platformShops.delete(id as string),
+    mutationFn: () => apiClient.platformShops.archive(id as string),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['platform-shops'] });
       await queryClient.invalidateQueries({ queryKey: ['platform-dashboard'] });
       await queryClient.invalidateQueries({ queryKey: ['platform-audit'] });
       navigate('/service/shops', { replace: true });
     },
-    onError: () => setNotice({ tone: 'danger', message: "Do'konni o'chirib bo'lmadi." }),
+    onError: () => setNotice({ tone: 'danger', message: "Do'konni arxivlab bo'lmadi." }),
   });
 
   if (!id) return <Navigate replace to="/service/shops" />;
@@ -128,7 +128,7 @@ export function ServiceShopDetailPage() {
     if (confirmAction === 'block') blockMutation.mutate();
     if (confirmAction === 'unblock') unblockMutation.mutate();
     if (confirmAction === 'reset') resetMutation.mutate();
-    if (confirmAction === 'delete') deleteMutation.mutate();
+    if (confirmAction === 'archive') deleteMutation.mutate();
   }
 
   const pending =
@@ -176,7 +176,7 @@ export function ServiceShopDetailPage() {
         />
       </section>
 
-      <section className="rounded-md border border-ink-200 bg-[#dfe8df] shadow-sm">
+      <section className="rounded-md border border-ink-200 bg-[#dfe8df] shadow-sm" id="edit">
         <div className="border-b border-ink-200 px-4 py-4">
           <h3 className="font-semibold text-ink-950">Do'konni tahrirlash</h3>
           <p className="mt-1 text-sm text-ink-500">
@@ -241,7 +241,8 @@ export function ServiceShopDetailPage() {
             >
               Bloklash
             </button>
-          ) : (
+          ) : null}
+          {shop.status === 'BLOCKED' ? (
             <button
               className="h-10 rounded-md border border-brand-200 px-4 text-sm font-semibold text-brand-700 hover:bg-brand-50"
               onClick={() => setConfirmAction('unblock')}
@@ -249,22 +250,44 @@ export function ServiceShopDetailPage() {
             >
               Blokdan chiqarish
             </button>
-          )}
-          <button
-            className="h-10 rounded-md border border-sun-200 px-4 text-sm font-semibold text-sun-700 hover:bg-sun-50"
-            onClick={() => setConfirmAction('reset')}
-            type="button"
-          >
-            Owner parolini reset qilish
-          </button>
-          <button
-            className="inline-flex h-10 items-center gap-2 rounded-md bg-petal-600 px-4 text-sm font-semibold text-white hover:bg-petal-700"
-            onClick={() => setConfirmAction('delete')}
-            type="button"
-          >
-            <Trash2 aria-hidden="true" size={16} />
-            Do'konni o'chirish
-          </button>
+          ) : null}
+          {shop.status !== 'ARCHIVED' ? (
+            <>
+              <button
+                className="h-10 rounded-md border border-sun-200 px-4 text-sm font-semibold text-sun-700 hover:bg-sun-50"
+                onClick={() => setConfirmAction('reset')}
+                type="button"
+              >
+                Owner parolini reset qilish
+              </button>
+              <button
+                className="inline-flex h-10 items-center gap-2 rounded-md bg-petal-600 px-4 text-sm font-semibold text-white hover:bg-petal-700"
+                onClick={() => setConfirmAction('archive')}
+                type="button"
+              >
+                <Trash2 aria-hidden="true" size={16} />
+                Do'konni arxivlash
+              </button>
+            </>
+          ) : null}
+        </div>
+      </section>
+
+      <section className="rounded-md border border-ink-200 bg-[#dfe8df] p-4 shadow-sm">
+        <h3 className="font-semibold text-ink-950">Qisqa audit tarixi</h3>
+        <div className="mt-4 divide-y divide-ink-200">
+          {shop.recentAudit.map((log) => (
+            <div className="grid gap-2 py-3 text-sm sm:grid-cols-[10rem_1fr]" key={log.id}>
+              <p className="text-ink-500">{new Date(log.createdAt).toLocaleString('uz-UZ')}</p>
+              <div>
+                <p className="font-semibold text-ink-950">{log.action}</p>
+                <p className="mt-1 text-ink-600">{log.description}</p>
+              </div>
+            </div>
+          ))}
+          {shop.recentAudit.length === 0 ? (
+            <p className="py-3 text-sm text-ink-500">Audit yozuvlari hozircha yo'q.</p>
+          ) : null}
         </div>
       </section>
 
@@ -276,7 +299,7 @@ export function ServiceShopDetailPage() {
         open={Boolean(confirmAction)}
         pending={pending}
         title={getConfirmTitle(confirmAction)}
-        tone={confirmAction === 'delete' || confirmAction === 'block' ? 'danger' : confirmAction === 'unblock' ? 'success' : 'warning'}
+        tone={confirmAction === 'archive' || confirmAction === 'block' ? 'danger' : confirmAction === 'unblock' ? 'success' : 'warning'}
       />
 
       {temporaryPassword ? (
@@ -374,7 +397,7 @@ function getConfirmTitle(action: ConfirmAction) {
   if (action === 'block') return "Do'konni bloklash";
   if (action === 'unblock') return "Do'konni blokdan chiqarish";
   if (action === 'reset') return 'Owner parolini reset qilish';
-  if (action === 'delete') return "Do'konni o'chirish";
+  if (action === 'archive') return "Do'konni arxivlash";
   return 'Amalni tasdiqlang';
 }
 
@@ -383,8 +406,8 @@ function getConfirmMessage(action: ConfirmAction, shopName: string) {
   if (action === 'unblock') return `${shopName} yana faol holatga o'tkaziladi.`;
   if (action === 'reset')
     return `${shopName} owneri uchun yangi bir martalik parol yaratiladi. Eski sessiyalar bekor qilinadi.`;
-  if (action === 'delete')
-    return `${shopName} ma'lumotlari butunlay o'chiriladi. Bu amalni ortga qaytarib bo'lmaydi.`;
+  if (action === 'archive')
+    return `${shopName} arxivlanadi. Do'kon ro'yxatda yashiriladi va faol sessiyalar bekor qilinadi.`;
   return 'Davom etishni tasdiqlaysizmi?';
 }
 
@@ -392,7 +415,7 @@ function getConfirmLabel(action: ConfirmAction) {
   if (action === 'block') return 'Bloklash';
   if (action === 'unblock') return 'Blokdan chiqarish';
   if (action === 'reset') return 'Reset qilish';
-  if (action === 'delete') return "O'chirish";
+  if (action === 'archive') return 'Arxivlash';
   return 'Tasdiqlash';
 }
 

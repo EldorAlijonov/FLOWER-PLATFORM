@@ -1,6 +1,9 @@
 import { z } from 'zod';
 
 export const shopPlanValues = ['START', 'BUSINESS', 'PRO'] as const;
+export const shopStatusFilterValues = ['ACTIVE', 'BLOCKED', 'ARCHIVED'] as const;
+export const shopSortValues = ['created_desc', 'created_asc', 'name_asc', 'name_desc'] as const;
+export const maxPlatformShopListLimit = 100;
 
 export const createPlatformShopSchema = z.object({
   name: z
@@ -31,6 +34,22 @@ export const updatePlatformShopSchema = createPlatformShopSchema
   });
 
 export type UpdatePlatformShopInput = z.infer<typeof updatePlatformShopSchema>;
+
+export const listPlatformShopsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(maxPlatformShopListLimit)
+    .default(20),
+  q: z.string().trim().max(120).optional(),
+  status: z.enum(shopStatusFilterValues).optional(),
+  plan: z.enum(shopPlanValues).optional(),
+  sort: z.enum(shopSortValues).default('created_desc'),
+});
+
+export type ListPlatformShopsQuery = z.infer<typeof listPlatformShopsQuerySchema>;
 
 export function zodFieldErrors(error: z.ZodError) {
   const flattened = error.flatten().fieldErrors;

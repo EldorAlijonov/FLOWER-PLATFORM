@@ -7,12 +7,14 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
 import { PlatformAuthGuard } from '../auth/platform-auth.guard';
 import {
   createPlatformShopSchema,
+  listPlatformShopsQuerySchema,
   updatePlatformShopSchema,
   zodFieldErrors,
 } from './platform-shops.dto';
@@ -46,8 +48,17 @@ export class PlatformShopsController {
   constructor(private readonly platformShopsService: PlatformShopsService) {}
 
   @Get()
-  listShops() {
-    return this.platformShopsService.listShops();
+  listShops(@Query() query: unknown) {
+    const parsed = listPlatformShopsQuerySchema.safeParse(query);
+
+    if (!parsed.success) {
+      throw new BadRequestException({
+        message: "So'rov parametrlarini tekshiring.",
+        errors: zodFieldErrors(parsed.error),
+      });
+    }
+
+    return this.platformShopsService.listShops(parsed.data);
   }
 
   @Get(':id')
@@ -101,5 +112,10 @@ export class PlatformShopsController {
   @Delete(':id')
   deleteShop(@Param('id') id: string, @Req() request: any) {
     return this.platformShopsService.deleteShop(id, request.platformUser.id);
+  }
+
+  @Post(':id/archive')
+  archiveShop(@Param('id') id: string, @Req() request: any) {
+    return this.platformShopsService.archiveShop(id, request.platformUser.id);
   }
 }

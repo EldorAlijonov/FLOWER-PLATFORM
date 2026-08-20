@@ -1,7 +1,12 @@
-import type { PlatformShop } from '@flower-platform/api-client';
+import type {
+  ListPlatformShopsQuery,
+  PlatformShop,
+  ShopPlan,
+  ShopStatus,
+} from '@flower-platform/api-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Copy, LayoutGrid, List, MoreHorizontal, Plus, Search } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ServiceCreateShopModal } from '../../components/service/ServiceCreateShopModal';
 import { ServiceConfirmModal } from '../../components/service/ServiceConfirmModal';
@@ -13,10 +18,10 @@ type ConfirmAction =
   | { type: 'block'; shop: PlatformShop }
   | { type: 'unblock'; shop: PlatformShop }
   | { type: 'reset'; shop: PlatformShop }
-  | { type: 'delete'; shop: PlatformShop };
+  | { type: 'archive'; shop: PlatformShop };
 
 type Notice = { tone: 'success' | 'danger'; message: string } | null;
-const SHOPS_PAGE_SIZE = 8;
+const SHOPS_PAGE_SIZE = 10;
 const ACTIONS_DROPDOWN_HEIGHT = 220;
 
 export function ServiceShopsPage() {
@@ -25,15 +30,48 @@ export function ServiceShopsPage() {
   const createModalOpen = searchParams.get('new') === '1';
   const viewMode = searchParams.get('view') === 'cards' ? 'cards' : 'table';
   const currentPage = getPageParam(searchParams);
+  const q = searchParams.get('q') ?? '';
+  const status = getStatusParam(searchParams);
+  const plan = getPlanParam(searchParams);
+  const sort = getSortParam(searchParams);
   const [openActionsId, setOpenActionsId] = useSearchParamsState('action');
   const [temporaryPassword, setTemporaryPassword] = useStateSecret();
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
   const [notice, setNotice] = useState<Notice>(null);
+  const [searchValue, setSearchValue] = useState(q);
+  const listQuery: ListPlatformShopsQuery = {
+    page: currentPage,
+    limit: SHOPS_PAGE_SIZE,
+    q: q || undefined,
+    status,
+    plan,
+    sort,
+  };
   const shopsQuery = useQuery({
-    queryKey: ['platform-shops'],
-    queryFn: () => apiClient.platformShops.list(),
+    queryKey: ['platform-shops', listQuery],
+    queryFn: () => apiClient.platformShops.list(listQuery),
     retry: false,
   });
+
+  useEffect(() => {
+    setSearchValue(q);
+  }, [q]);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      const next = new URLSearchParams(searchParams);
+      if (searchValue.trim()) next.set('q', searchValue.trim());
+      else next.delete('q');
+      next.set('page', '1');
+      next.delete('action');
+
+      if (next.toString() !== searchParams.toString()) {
+        setSearchParams(next);
+      }
+    }, 350);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [searchParams, searchValue, setSearchParams]);
   const refreshLists = async () => {
     await queryClient.invalidateQueries({ queryKey: ['platform-shops'] });
     await queryClient.invalidateQueries({ queryKey: ['platform-dashboard'] });
@@ -68,13 +106,13 @@ export function ServiceShopsPage() {
     onError: () => setNotice({ tone: 'danger', message: "Owner parolini reset qilib bo'lmadi." }),
   });
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => apiClient.platformShops.delete(id),
+    mutationFn: (id: string) => apiClient.platformShops.archive(id),
     onSuccess: async () => {
-      setNotice({ tone: 'success', message: "Do'kon ma'lumotlari o'chirildi." });
+      setNotice({ tone: 'success', message: "Do'kon arxivlandi." });
       setConfirmAction(null);
       await refreshLists();
     },
-    onError: () => setNotice({ tone: 'danger', message: "Do'konni o'chirib bo'lmadi." }),
+    onError: () => setNotice({ tone: 'danger', message: "Do'konni arxivlab bo'lmadi." }),
   });
 
   function openCreateModal() {
@@ -105,6 +143,15 @@ export function ServiceShopsPage() {
     setSearchParams(next);
   }
 
+  function setFilter(key: 'status' | 'plan' | 'sort', value: string) {
+    const next = new URLSearchParams(searchParams);
+    if (value) next.set(key, value);
+    else next.delete(key);
+    next.set('page', '1');
+    next.delete('action');
+    setSearchParams(next);
+  }
+
   function requestAction(action: ConfirmAction) {
     setOpenActionsId('');
     setConfirmAction(action);
@@ -115,7 +162,7 @@ export function ServiceShopsPage() {
     if (confirmAction.type === 'block') blockMutation.mutate(confirmAction.shop.id);
     if (confirmAction.type === 'unblock') unblockMutation.mutate(confirmAction.shop.id);
     if (confirmAction.type === 'reset') resetMutation.mutate(confirmAction.shop.id);
-    if (confirmAction.type === 'delete') deleteMutation.mutate(confirmAction.shop.id);
+    if (confirmAction.type === 'archive') deleteMutation.mutate(confirmAction.shop.id);
   }
 
   const pending =
@@ -123,10 +170,14 @@ export function ServiceShopsPage() {
     unblockMutation.isPending ||
     resetMutation.isPending ||
     deleteMutation.isPending;
-  const shops = shopsQuery.data ?? [];
-  const totalShopPages = Math.max(1, Math.ceil(shops.length / SHOPS_PAGE_SIZE));
-  const page = Math.min(currentPage, totalShopPages);
-  const paginatedShops = shops.slice((page - 1) * SHOPS_PAGE_SIZE, page * SHOPS_PAGE_SIZE);
+  const shops = shopsQuery.data?.items ?? [];
+  const pagination = shopsQuery.data?.pagination ?? {
+    page: currentPage,
+    limit: SHOPS_PAGE_SIZE,
+    total: 0,
+    totalPages: 1,
+  };
+  const page = pagination.page;
 
   return (
     <div className="mx-auto flex h-[calc(100vh-6.5rem)] max-w-7xl flex-col gap-5">
@@ -150,7 +201,7 @@ export function ServiceShopsPage() {
       <section className="flex min-h-0 flex-1 flex-col rounded-md border border-ink-200 bg-[#dfe8df] shadow-sm">
         <div className="shrink-0 border-b border-ink-200 p-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <label className="relative block max-w-md">
+          <label className="relative block w-full max-w-md">
             <Search
               aria-hidden="true"
               className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-500"
@@ -159,10 +210,44 @@ export function ServiceShopsPage() {
             <span className="sr-only">Qidirish</span>
             <input
               className="h-10 w-full rounded-md border border-ink-200 bg-ink-50 pl-10 pr-3 text-sm outline-none focus:border-brand-600 focus:bg-[#dfe8df] focus:ring-4 focus:ring-brand-100"
+              onChange={(event) => setSearchValue(event.target.value)}
               placeholder="Qidirish..."
               type="search"
+              value={searchValue}
             />
           </label>
+          <div className="flex flex-wrap gap-2">
+            <select
+              className="h-10 rounded-md border border-ink-200 bg-ink-50 px-3 text-sm font-medium text-ink-700 outline-none focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
+              onChange={(event) => setFilter('status', event.target.value)}
+              value={status ?? ''}
+            >
+              <option value="">Barcha statuslar</option>
+              <option value="ACTIVE">Faol</option>
+              <option value="BLOCKED">Bloklangan</option>
+              <option value="ARCHIVED">Arxivlangan</option>
+            </select>
+            <select
+              className="h-10 rounded-md border border-ink-200 bg-ink-50 px-3 text-sm font-medium text-ink-700 outline-none focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
+              onChange={(event) => setFilter('plan', event.target.value)}
+              value={plan ?? ''}
+            >
+              <option value="">Barcha tariflar</option>
+              <option value="START">START</option>
+              <option value="BUSINESS">BUSINESS</option>
+              <option value="PRO">PRO</option>
+            </select>
+            <select
+              className="h-10 rounded-md border border-ink-200 bg-ink-50 px-3 text-sm font-medium text-ink-700 outline-none focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
+              onChange={(event) => setFilter('sort', event.target.value)}
+              value={sort}
+            >
+              <option value="created_desc">Yangi yaratilganlar</option>
+              <option value="created_asc">Eski yaratilganlar</option>
+              <option value="name_asc">Nom A-Z</option>
+              <option value="name_desc">Nom Z-A</option>
+            </select>
+          </div>
           <div className="inline-flex w-fit rounded-md border border-ink-200 bg-[#cbd9ce] p-1">
             <button
               className={`inline-flex h-9 items-center gap-2 rounded px-3 text-sm font-semibold ${
@@ -202,7 +287,7 @@ export function ServiceShopsPage() {
           </div>
         ) : null}
 
-        {!shopsQuery.isLoading && !shopsQuery.isError && shopsQuery.data?.length === 0 ? (
+        {!shopsQuery.isLoading && !shopsQuery.isError && pagination.total === 0 ? (
           <div className="p-6 text-center">
             <p className="text-sm text-ink-500">Hozircha do'konlar mavjud emas.</p>
             <button
@@ -226,6 +311,7 @@ export function ServiceShopsPage() {
                     <th className="w-16 px-4 py-3 font-medium">No.</th>
                     <th className="px-4 py-3 font-medium">Do'kon nomi</th>
                     <th className="px-4 py-3 font-medium">Egasi</th>
+                    <th className="px-4 py-3 font-medium">Login</th>
                     <th className="px-4 py-3 font-medium">Telefon</th>
                     <th className="px-4 py-3 font-medium">Tarif</th>
                     <th className="px-4 py-3 font-medium">Holati</th>
@@ -234,13 +320,14 @@ export function ServiceShopsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-ink-100">
-                  {paginatedShops.map((shop, index) => (
+                  {shops.map((shop, index) => (
                     <tr className="transition hover:bg-[#f2f7f1]" key={shop.id}>
                       <td className="px-4 py-4 font-medium text-ink-500">
                         {(page - 1) * SHOPS_PAGE_SIZE + index + 1}
                       </td>
                       <td className="px-4 py-4 font-semibold text-ink-950">{shop.name}</td>
                       <td className="px-4 py-4 text-ink-600">{shop.ownerName}</td>
+                      <td className="px-4 py-4 text-ink-600">{shop.ownerLogin ?? '-'}</td>
                       <td className="px-4 py-4 text-ink-600">{shop.phone}</td>
                       <td className="px-4 py-4 font-medium text-ink-700">{shop.plan}</td>
                       <td className="px-4 py-4">
@@ -250,7 +337,7 @@ export function ServiceShopsPage() {
                       <td className="px-4 py-4">
                         <ActionsDropdown
                           onBlock={() => requestAction({ type: 'block', shop })}
-                          onDelete={() => requestAction({ type: 'delete', shop })}
+                          onDelete={() => requestAction({ type: 'archive', shop })}
                           onReset={() => requestAction({ type: 'reset', shop })}
                           onToggle={() =>
                             setOpenActionsId(openActionsId === shop.id ? '' : shop.id)
@@ -275,7 +362,7 @@ export function ServiceShopsPage() {
                   : 'divide-y divide-ink-100 md:hidden'
               }
             >
-              {paginatedShops.map((shop, index) => (
+              {shops.map((shop, index) => (
                 <article
                   className={
                     viewMode === 'cards'
@@ -292,6 +379,7 @@ export function ServiceShopsPage() {
                       <div className="min-w-0">
                         <p className="font-semibold text-ink-950">{shop.name}</p>
                         <p className="mt-1 text-sm text-ink-500">{shop.ownerName}</p>
+                        <p className="mt-1 text-xs text-ink-500">{shop.ownerLogin ?? '-'}</p>
                       </div>
                     </div>
                     <ShopStatusBadge status={shop.status} />
@@ -307,7 +395,7 @@ export function ServiceShopsPage() {
                   <div className="flex justify-end">
                     <ActionsDropdown
                       onBlock={() => requestAction({ type: 'block', shop })}
-                      onDelete={() => requestAction({ type: 'delete', shop })}
+                      onDelete={() => requestAction({ type: 'archive', shop })}
                       onReset={() => requestAction({ type: 'reset', shop })}
                       onToggle={() => setOpenActionsId(openActionsId === shop.id ? '' : shop.id)}
                       onClose={() => setOpenActionsId('')}
@@ -326,7 +414,7 @@ export function ServiceShopsPage() {
             onPageChange={setCurrentPage}
             page={page}
             pageSize={SHOPS_PAGE_SIZE}
-            totalItems={shops.length}
+            totalItems={pagination.total}
           />
         ) : null}
       </section>
@@ -340,7 +428,7 @@ export function ServiceShopsPage() {
         open={Boolean(confirmAction)}
         pending={pending}
         title={getConfirmTitle(confirmAction)}
-        tone={confirmAction?.type === 'delete' || confirmAction?.type === 'block' ? 'danger' : confirmAction?.type === 'unblock' ? 'success' : 'warning'}
+        tone={confirmAction?.type === 'archive' || confirmAction?.type === 'block' ? 'danger' : confirmAction?.type === 'unblock' ? 'success' : 'warning'}
       />
       {temporaryPassword ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
@@ -393,6 +481,31 @@ function formatDate(value: string) {
 function getPageParam(searchParams: URLSearchParams) {
   const page = Number(searchParams.get('page') ?? '1');
   return Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
+}
+
+function getStatusParam(searchParams: URLSearchParams): ShopStatus | undefined {
+  const value = searchParams.get('status');
+  return value === 'ACTIVE' || value === 'BLOCKED' || value === 'ARCHIVED' ? value : undefined;
+}
+
+function getPlanParam(searchParams: URLSearchParams): ShopPlan | undefined {
+  const value = searchParams.get('plan');
+  return value === 'START' || value === 'BUSINESS' || value === 'PRO' ? value : undefined;
+}
+
+function getSortParam(searchParams: URLSearchParams): NonNullable<ListPlatformShopsQuery['sort']> {
+  const value = searchParams.get('sort');
+
+  if (
+    value === 'created_asc' ||
+    value === 'name_asc' ||
+    value === 'name_desc' ||
+    value === 'created_desc'
+  ) {
+    return value;
+  }
+
+  return 'created_desc';
 }
 
 function ActionsDropdown({
@@ -453,6 +566,12 @@ function ActionsDropdown({
           >
             Ko'rish
           </Link>
+          <Link
+            className="block rounded px-3 py-2 font-medium text-ink-700 hover:bg-ink-50"
+            to={`/service/shops/${shop.id}#edit`}
+          >
+            Tahrirlash
+          </Link>
           {shop.status === 'ACTIVE' ? (
             <button
               className="block w-full rounded px-3 py-2 text-left font-medium text-petal-700 hover:bg-petal-50"
@@ -461,7 +580,8 @@ function ActionsDropdown({
             >
               Bloklash
             </button>
-          ) : (
+          ) : null}
+          {shop.status === 'BLOCKED' ? (
             <button
               className="block w-full rounded px-3 py-2 text-left font-medium text-brand-700 hover:bg-brand-50"
               onClick={onUnblock}
@@ -469,21 +589,25 @@ function ActionsDropdown({
             >
               Blokdan chiqarish
             </button>
-          )}
-          <button
-            className="block w-full rounded px-3 py-2 text-left font-medium text-sun-700 hover:bg-sun-50"
-            onClick={onReset}
-            type="button"
-          >
-            Owner uchun bir martalik parol yaratish
-          </button>
-          <button
-            className="block w-full rounded px-3 py-2 text-left font-medium text-petal-700 hover:bg-petal-50"
-            onClick={onDelete}
-            type="button"
-          >
-            Do'konni o'chirish
-          </button>
+          ) : null}
+          {shop.status !== 'ARCHIVED' ? (
+            <>
+              <button
+                className="block w-full rounded px-3 py-2 text-left font-medium text-sun-700 hover:bg-sun-50"
+                onClick={onReset}
+                type="button"
+              >
+                Bir martalik parol yaratish
+              </button>
+              <button
+                className="block w-full rounded px-3 py-2 text-left font-medium text-petal-700 hover:bg-petal-50"
+                onClick={onDelete}
+                type="button"
+              >
+                Arxivlash
+              </button>
+            </>
+          ) : null}
         </div>
       ) : null}
     </div>
@@ -517,7 +641,7 @@ function getConfirmTitle(action: ConfirmAction | null) {
   if (action.type === 'block') return "Do'konni bloklash";
   if (action.type === 'unblock') return "Do'konni blokdan chiqarish";
   if (action.type === 'reset') return 'Owner parolini reset qilish';
-  return "Do'konni o'chirish";
+  return "Do'konni arxivlash";
 }
 
 function getConfirmMessage(action: ConfirmAction | null) {
@@ -526,7 +650,7 @@ function getConfirmMessage(action: ConfirmAction | null) {
   if (action.type === 'unblock') return `${action.shop.name} yana faol holatga o'tkaziladi.`;
   if (action.type === 'reset')
     return `${action.shop.name} owneri uchun yangi bir martalik parol yaratiladi. Eski sessiyalar bekor qilinadi.`;
-  return `${action.shop.name} ma'lumotlari butunlay o'chiriladi. Bu amalni ortga qaytarib bo'lmaydi.`;
+  return `${action.shop.name} arxivlanadi. Do'kon ro'yxatda yashiriladi va faol sessiyalar bekor qilinadi.`;
 }
 
 function getConfirmLabel(action: ConfirmAction | null) {
@@ -534,7 +658,7 @@ function getConfirmLabel(action: ConfirmAction | null) {
   if (action.type === 'block') return 'Bloklash';
   if (action.type === 'unblock') return 'Blokdan chiqarish';
   if (action.type === 'reset') return 'Reset qilish';
-  return "O'chirish";
+  return 'Arxivlash';
 }
 
 function NoticeBanner({ notice, onClose }: { notice: NonNullable<Notice>; onClose: () => void }) {
