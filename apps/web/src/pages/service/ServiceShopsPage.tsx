@@ -558,7 +558,7 @@ function ActionsDropdown({
           className={`absolute right-0 z-20 w-64 rounded-md border border-ink-200 bg-[#dfe8df] p-1 text-sm shadow-lg ${
             openUp ? 'bottom-full mb-2' : 'mt-2'
           }`}
-          onMouseLeave={onClose}
+          onPointerLeave={onClose}
         >
           <Link
             className="block rounded px-3 py-2 font-medium text-brand-700 hover:bg-brand-50"
