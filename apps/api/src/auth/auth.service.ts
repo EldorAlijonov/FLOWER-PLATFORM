@@ -491,6 +491,86 @@ export class AuthService {
     };
   }
 
+  async getPlatformSecurity(platformUserId: string, currentToken: string | undefined) {
+    const sessions = await this.prisma.authSession.findMany({
+      where: { platformUserId, scope: 'PLATFORM' },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        tokenHash: true,
+        status: true,
+        expiresAt: true,
+        revokedAt: true,
+        createdAt: true,
+      },
+    });
+    const currentTokenHash = currentToken ? hashSessionToken(currentToken) : undefined;
+
+    return {
+      sessions: sessions.map((session) => ({
+        id: session.id,
+        status: session.status,
+        expiresAt: session.expiresAt.toISOString(),
+        revokedAt: session.revokedAt?.toISOString() ?? null,
+        createdAt: session.createdAt.toISOString(),
+        current: currentTokenHash === session.tokenHash,
+      })),
+    };
+  }
+
+  async changePlatformPassword(
+    platformUserId: string,
+    currentPassword: string,
+    newPassword: string,
+    currentToken: string | undefined,
+  ) {
+    const platformUser = await this.prisma.platformUser.findUnique({
+      where: { id: platformUserId },
+      select: { id: true, login: true, passwordHash: true },
+    });
+
+    if (!platformUser) {
+      throw new UnauthorizedException(authMessages.unauthorized);
+    }
+
+    if (!(await this.passwordService.verify(currentPassword, platformUser.passwordHash))) {
+      throw new ForbiddenException({ errors: { currentPassword: "Hozirgi parol noto'g'ri." } });
+    }
+
+    if (await this.passwordService.verify(newPassword, platformUser.passwordHash)) {
+      throw new ForbiddenException({
+        errors: { newPassword: 'Yangi parol eski paroldan farq qilishi kerak.' },
+      });
+    }
+
+    const currentTokenHash = currentToken ? hashSessionToken(currentToken) : undefined;
+    await this.prisma.$transaction(async (tx) => {
+      await tx.platformUser.update({
+        where: { id: platformUserId },
+        data: { passwordHash: await this.passwordService.hash(newPassword) },
+      });
+      await tx.authSession.updateMany({
+        where: {
+          platformUserId,
+          scope: 'PLATFORM',
+          status: 'ACTIVE',
+          tokenHash: currentTokenHash ? { not: currentTokenHash } : undefined,
+        },
+        data: { status: 'REVOKED', revokedAt: new Date() },
+      });
+      await tx.auditLog.create({
+        data: {
+          action: 'PLATFORM_PASSWORD_CHANGED',
+          entity: 'PLATFORM_AUTH',
+          platformUserId,
+          metadata: { login: platformUser.login },
+        },
+      });
+    });
+
+    return { ok: true };
+  }
+
   async changeShopPassword(userId: string, newPassword: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },

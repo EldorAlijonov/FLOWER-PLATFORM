@@ -58,6 +58,21 @@ export type PlatformProfiles = {
   }>;
 };
 
+export type PlatformProfileResponse = {
+  user: PlatformAuthUser;
+};
+
+export type PlatformSecurityResponse = {
+  sessions: Array<{
+    id: string;
+    status: string;
+    expiresAt: string;
+    revokedAt: string | null;
+    createdAt: string;
+    current: boolean;
+  }>;
+};
+
 export type ShopPlan = 'START' | 'BUSINESS' | 'PRO';
 export type ShopStatus = 'ACTIVE' | 'BLOCKED' | 'ARCHIVED';
 export type SubscriptionStatus = 'ACTIVE' | 'EXPIRED' | 'SUSPENDED';
@@ -259,6 +274,22 @@ export function createApiClient(options: ApiClientOptions) {
     platformAuth: {
       profiles(): Promise<PlatformProfiles> {
         return createApiClient(options).request('/v1/platform/auth/profiles');
+      },
+      profile(): Promise<PlatformProfileResponse> {
+        return createApiClient(options).request('/v1/platform/auth/profile');
+      },
+      security(): Promise<PlatformSecurityResponse> {
+        return createApiClient(options).request('/v1/platform/auth/security');
+      },
+      changePassword(body: {
+        currentPassword: string;
+        newPassword: string;
+        confirmPassword: string;
+      }): Promise<{ ok: true }> {
+        return createApiClient(options).request('/v1/platform/auth/change-password', {
+          method: 'POST',
+          body: JSON.stringify(body),
+        });
       },
     },
 
