@@ -5,6 +5,7 @@ import { PasswordService } from '../auth/password.service';
 import { PrismaService } from '../database/prisma.service';
 import type {
   CreatePlatformShopInput,
+  ListPlatformAuditQuery,
   ListPlatformShopsQuery,
   UpdatePlatformShopInput,
 } from './platform-shops.dto';
@@ -67,14 +68,28 @@ export class PlatformShopsService {
     };
   }
 
-  async listAuditLogs() {
-    const logs = await this.prisma.auditLog.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 100,
-      select: this.auditLogSelect(),
-    });
+  async listAuditLogs(query: ListPlatformAuditQuery) {
+    const where = this.auditListWhere(query);
+    const [total, logs] = await Promise.all([
+      this.prisma.auditLog.count({ where }),
+      this.prisma.auditLog.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (query.page - 1) * query.limit,
+        take: query.limit,
+        select: this.auditLogSelect(),
+      }),
+    ]);
 
-    return logs.map((log) => this.serializeAuditLog(log));
+    return {
+      items: logs.map((log) => this.serializeAuditLog(log)),
+      pagination: {
+        page: query.page,
+        limit: query.limit,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / query.limit)),
+      },
+    };
   }
 
   async listShops(query: ListPlatformShopsQuery) {
@@ -495,6 +510,42 @@ export class PlatformShopsService {
       shop: log.shop ? { id: log.shop.id, name: log.shop.name } : null,
       description: this.auditDescription(log.action, log.metadata),
     };
+  }
+
+  private auditListWhere(query: ListPlatformAuditQuery): Prisma.AuditLogWhereInput {
+    const filters: Prisma.AuditLogWhereInput[] = [];
+
+    if (query.action) {
+      filters.push({ action: query.action });
+    }
+
+    if (query.shopId) {
+      filters.push({ shopId: query.shopId });
+    }
+
+    if (query.from || query.to) {
+      filters.push({
+        createdAt: {
+          gte: query.from,
+          lte: query.to,
+        },
+      });
+    }
+
+    if (query.q) {
+      filters.push({
+        OR: [
+          { action: { contains: query.q, mode: 'insensitive' } },
+          { entity: { contains: query.q, mode: 'insensitive' } },
+          { shop: { name: { contains: query.q, mode: 'insensitive' } } },
+          { platformUser: { login: { contains: query.q, mode: 'insensitive' } } },
+          { user: { fullName: { contains: query.q, mode: 'insensitive' } } },
+          { user: { login: { contains: query.q, mode: 'insensitive' } } },
+        ],
+      });
+    }
+
+    return filters.length > 0 ? { AND: filters } : {};
   }
 
   private async recordAudit(

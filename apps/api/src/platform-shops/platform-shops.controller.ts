@@ -14,6 +14,7 @@ import {
 import { PlatformAuthGuard } from '../auth/platform-auth.guard';
 import {
   createPlatformShopSchema,
+  listPlatformAuditQuerySchema,
   listPlatformShopsQuerySchema,
   updatePlatformShopSchema,
   zodFieldErrors,
@@ -37,8 +38,17 @@ export class PlatformAuditController {
   constructor(private readonly platformShopsService: PlatformShopsService) {}
 
   @Get()
-  listAudit() {
-    return this.platformShopsService.listAuditLogs();
+  listAudit(@Query() query: unknown) {
+    const parsed = listPlatformAuditQuerySchema.safeParse(query);
+
+    if (!parsed.success) {
+      throw new BadRequestException({
+        message: "So'rov parametrlarini tekshiring.",
+        errors: zodFieldErrors(parsed.error),
+      });
+    }
+
+    return this.platformShopsService.listAuditLogs(parsed.data);
   }
 }
 

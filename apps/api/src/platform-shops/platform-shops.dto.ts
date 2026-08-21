@@ -4,6 +4,7 @@ export const shopPlanValues = ['START', 'BUSINESS', 'PRO'] as const;
 export const shopStatusFilterValues = ['ACTIVE', 'BLOCKED', 'ARCHIVED'] as const;
 export const shopSortValues = ['created_desc', 'created_asc', 'name_asc', 'name_desc'] as const;
 export const maxPlatformShopListLimit = 100;
+export const maxPlatformAuditListLimit = 100;
 
 export const createPlatformShopSchema = z.object({
   name: z
@@ -50,6 +51,23 @@ export const listPlatformShopsQuerySchema = z.object({
 });
 
 export type ListPlatformShopsQuery = z.infer<typeof listPlatformShopsQuerySchema>;
+
+export const listPlatformAuditQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(maxPlatformAuditListLimit)
+    .default(20),
+  q: z.string().trim().max(120).optional(),
+  action: z.string().trim().max(80).optional(),
+  shopId: z.string().uuid().optional(),
+  from: z.coerce.date().optional(),
+  to: z.coerce.date().optional(),
+});
+
+export type ListPlatformAuditQuery = z.infer<typeof listPlatformAuditQuerySchema>;
 
 export function zodFieldErrors(error: z.ZodError) {
   const flattened = error.flatten().fieldErrors;

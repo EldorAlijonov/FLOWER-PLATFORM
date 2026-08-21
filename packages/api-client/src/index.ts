@@ -149,6 +149,16 @@ export type PlatformAuditLog = {
   description: string;
 };
 
+export type ListPlatformAuditQuery = {
+  page?: number;
+  limit?: number;
+  q?: string;
+  action?: string;
+  shopId?: string;
+  from?: string;
+  to?: string;
+};
+
 export type ListPlatformShopsQuery = {
   page?: number;
   limit?: number;
@@ -281,8 +291,10 @@ export function createApiClient(options: ApiClientOptions) {
     },
 
     platformAudit: {
-      list(): Promise<PlatformAuditLog[]> {
-        return createApiClient(options).request('/v1/platform/audit');
+      list(query: ListPlatformAuditQuery = {}): Promise<PaginatedResponse<PlatformAuditLog>> {
+        return createApiClient(options).request(
+          `/v1/platform/audit${toQueryString(query as Record<string, string | number | undefined>)}`,
+        );
       },
     },
   };
