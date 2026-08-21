@@ -23,6 +23,7 @@ type ConfirmAction =
 type Notice = { tone: 'success' | 'danger'; message: string } | null;
 const SHOPS_PAGE_SIZE = 10;
 const ACTIONS_DROPDOWN_HEIGHT = 220;
+const ACTIONS_MIN_OPEN_MS = 3000;
 
 export function ServiceShopsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -529,6 +530,7 @@ function ActionsDropdown({
 }) {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const closeTimeoutRef = useRef<number | null>(null);
+  const openedAtRef = useRef(0);
   const [openUp, setOpenUp] = useState(false);
 
   function clearCloseTimeout() {
@@ -548,15 +550,21 @@ function ActionsDropdown({
       setOpenUp(spaceBelow < ACTIONS_DROPDOWN_HEIGHT && spaceAbove > spaceBelow);
     }
 
+    if (!open) {
+      openedAtRef.current = Date.now();
+    }
+
     onToggle();
   }
 
   function scheduleClose() {
     clearCloseTimeout();
+    const elapsed = Date.now() - openedAtRef.current;
+    const remaining = Math.max(ACTIONS_MIN_OPEN_MS - elapsed, 0);
     closeTimeoutRef.current = window.setTimeout(() => {
       onClose();
       closeTimeoutRef.current = null;
-    }, 180);
+    }, remaining);
   }
 
   return (
