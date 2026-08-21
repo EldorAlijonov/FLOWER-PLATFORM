@@ -132,8 +132,11 @@ export type PlatformDashboard = {
   totalShops: number;
   activeShops: number;
   blockedShops: number;
+  archivedShops: number;
+  createdLast30Days: number;
   plans: Record<ShopPlan, number>;
   recentShops: PlatformShop[];
+  recentAudit: PlatformAuditLog[];
 };
 
 export type PlatformAuditLog = {

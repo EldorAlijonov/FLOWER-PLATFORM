@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { AlertTriangle, CreditCard, Store, StoreIcon } from 'lucide-react';
+import { Archive, CalendarPlus, Clock3, CreditCard, Store, StoreIcon, TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 import { ServicePagination } from '../../components/service/ServicePagination';
 import { ServiceStatCard } from '../../components/service/ServiceStatCard';
@@ -45,7 +45,19 @@ export function ServiceDashboardPage() {
       title: "Bloklangan do'konlar",
       value: String(dashboardQuery.data.blockedShops),
       subtitle: "Kirish cheklangan do'konlar",
-      icon: AlertTriangle,
+      icon: TriangleAlert,
+    },
+    {
+      title: 'Arxivlangan',
+      value: String(dashboardQuery.data.archivedShops),
+      subtitle: "Ro'yxatdan chiqarilgan do'konlar",
+      icon: Archive,
+    },
+    {
+      title: '30 kun ichida',
+      value: String(dashboardQuery.data.createdLast30Days),
+      subtitle: "Oxirgi 30 kunda yaratilgan do'konlar",
+      icon: CalendarPlus,
     },
     {
       title: 'START / BUSINESS / PRO',
@@ -64,7 +76,7 @@ export function ServiceDashboardPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-5">
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {stats.map((stat) => (
           <ServiceStatCard key={stat.title} {...stat} />
         ))}
@@ -103,6 +115,32 @@ export function ServiceDashboardPage() {
           pageSize={RECENT_SHOPS_PAGE_SIZE}
           totalItems={recentShops.length}
         />
+      </section>
+
+      <section className="rounded-md border border-ink-200 bg-[#dfe8df] shadow-sm">
+        <div className="border-b border-ink-200 px-4 py-4 sm:px-5">
+          <div className="flex items-center gap-2">
+            <Clock3 aria-hidden="true" className="text-ink-500" size={18} />
+            <h2 className="text-base font-semibold text-ink-950">So'nggi amallar</h2>
+          </div>
+        </div>
+        <div className="divide-y divide-ink-100">
+          {dashboardQuery.data.recentAudit.map((log) => (
+            <div className="grid gap-2 px-4 py-4 text-sm transition hover:bg-[#f2f7f1] sm:grid-cols-[11rem_1fr_9rem]" key={log.id}>
+              <p className="text-ink-500">{new Date(log.createdAt).toLocaleString('uz-UZ')}</p>
+              <div>
+                <p className="font-semibold text-ink-950">{log.description}</p>
+                <p className="mt-1 text-xs text-ink-500">{log.shop?.name ?? '-'}</p>
+              </div>
+              <span className="w-fit rounded-md bg-ink-100 px-2 py-1 text-xs font-semibold text-ink-700">
+                {log.action}
+              </span>
+            </div>
+          ))}
+          {dashboardQuery.data.recentAudit.length === 0 ? (
+            <p className="p-4 text-sm text-ink-500">Hozircha audit yozuvlari yo'q.</p>
+          ) : null}
+        </div>
       </section>
     </div>
   );

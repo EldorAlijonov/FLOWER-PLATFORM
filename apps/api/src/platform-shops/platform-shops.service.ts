@@ -17,10 +17,22 @@ export class PlatformShopsService {
   ) {}
 
   async getDashboard() {
-    const [totalShops, activeShops, blockedShops, planGroups, recentShops] = await Promise.all([
+    const thirtyDaysAgo = new Date(Date.now() - 1000 * 60 * 60 * 24 * 30);
+    const [
+      totalShops,
+      activeShops,
+      blockedShops,
+      archivedShops,
+      createdLast30Days,
+      planGroups,
+      recentShops,
+      recentAudit,
+    ] = await Promise.all([
       this.prisma.shop.count({ where: { status: { not: 'ARCHIVED' } } }),
       this.prisma.shop.count({ where: { status: 'ACTIVE' } }),
       this.prisma.shop.count({ where: { status: 'BLOCKED' } }),
+      this.prisma.shop.count({ where: { status: 'ARCHIVED' } }),
+      this.prisma.shop.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
       this.prisma.shop.groupBy({
         by: ['plan'],
         where: { status: { not: 'ARCHIVED' } },
@@ -32,18 +44,26 @@ export class PlatformShopsService {
         take: 5,
         select: this.shopListSelect(),
       }),
+      this.prisma.auditLog.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 8,
+        select: this.auditLogSelect(),
+      }),
     ]);
 
     return {
       totalShops,
       activeShops,
       blockedShops,
+      archivedShops,
+      createdLast30Days,
       plans: {
         START: planGroups.find((group) => group.plan === 'START')?._count.id ?? 0,
         BUSINESS: planGroups.find((group) => group.plan === 'BUSINESS')?._count.id ?? 0,
         PRO: planGroups.find((group) => group.plan === 'PRO')?._count.id ?? 0,
       },
       recentShops: recentShops.map(this.serializeShop),
+      recentAudit: recentAudit.map((log) => this.serializeAuditLog(log)),
     };
   }
 
@@ -51,27 +71,10 @@ export class PlatformShopsService {
     const logs = await this.prisma.auditLog.findMany({
       orderBy: { createdAt: 'desc' },
       take: 100,
-      select: {
-        id: true,
-        action: true,
-        entity: true,
-        createdAt: true,
-        metadata: true,
-        shop: { select: { id: true, name: true } },
-        platformUser: { select: { id: true, login: true } },
-        user: { select: { id: true, login: true, fullName: true } },
-      },
+      select: this.auditLogSelect(),
     });
 
-    return logs.map((log) => ({
-      id: log.id,
-      action: log.action,
-      entity: log.entity,
-      createdAt: log.createdAt.toISOString(),
-      actor: log.platformUser?.login ?? log.user?.fullName ?? log.user?.login ?? 'System',
-      shop: log.shop ? { id: log.shop.id, name: log.shop.name } : null,
-      description: this.auditDescription(log.action, log.metadata),
-    }));
+    return logs.map((log) => this.serializeAuditLog(log));
   }
 
   async listShops(query: ListPlatformShopsQuery) {
@@ -122,16 +125,7 @@ export class PlatformShopsService {
         auditLogs: {
           orderBy: { createdAt: 'desc' },
           take: 5,
-          select: {
-            id: true,
-            action: true,
-            entity: true,
-            createdAt: true,
-            metadata: true,
-            shop: { select: { id: true, name: true } },
-            platformUser: { select: { id: true, login: true } },
-            user: { select: { id: true, login: true, fullName: true } },
-          },
+          select: this.auditLogSelect(),
         },
       },
     });
@@ -151,15 +145,7 @@ export class PlatformShopsService {
             lastLoginAt: owner.lastLoginAt?.toISOString() ?? null,
           }
         : null,
-      recentAudit: shop.auditLogs.map((log) => ({
-        id: log.id,
-        action: log.action,
-        entity: log.entity,
-        createdAt: log.createdAt.toISOString(),
-        actor: log.platformUser?.login ?? log.user?.fullName ?? log.user?.login ?? 'System',
-        shop: log.shop ? { id: log.shop.id, name: log.shop.name } : null,
-        description: this.auditDescription(log.action, log.metadata),
-      })),
+      recentAudit: shop.auditLogs.map((log) => this.serializeAuditLog(log)),
     };
   }
 
@@ -475,6 +461,40 @@ export class PlatformShopsService {
     if (sort === 'name_asc') return { name: 'asc' };
     if (sort === 'name_desc') return { name: 'desc' };
     return { createdAt: 'desc' };
+  }
+
+  private auditLogSelect() {
+    return {
+      id: true,
+      action: true,
+      entity: true,
+      createdAt: true,
+      metadata: true,
+      shop: { select: { id: true, name: true } },
+      platformUser: { select: { id: true, login: true } },
+      user: { select: { id: true, login: true, fullName: true } },
+    } satisfies Prisma.AuditLogSelect;
+  }
+
+  private serializeAuditLog(log: {
+    id: string;
+    action: string;
+    entity: string;
+    createdAt: Date;
+    metadata: Prisma.JsonValue | null;
+    shop: { id: string; name: string } | null;
+    platformUser: { id: string; login: string } | null;
+    user: { id: string; login: string; fullName: string } | null;
+  }) {
+    return {
+      id: log.id,
+      action: log.action,
+      entity: log.entity,
+      createdAt: log.createdAt.toISOString(),
+      actor: log.platformUser?.login ?? log.user?.fullName ?? log.user?.login ?? 'System',
+      shop: log.shop ? { id: log.shop.id, name: log.shop.name } : null,
+      description: this.auditDescription(log.action, log.metadata),
+    };
   }
 
   private async recordAudit(
