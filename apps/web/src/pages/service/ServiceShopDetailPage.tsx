@@ -1,4 +1,9 @@
-import type { ShopPlan, UpdatePlatformShopBody } from '@flower-platform/api-client';
+import type {
+  SubscriptionStatus,
+  ShopPlan,
+  UpdatePlatformShopBody,
+  UpdateShopSubscriptionBody,
+} from '@flower-platform/api-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Copy, Trash2 } from 'lucide-react';
 import { FormEvent, useEffect, useState } from 'react';
@@ -16,6 +21,9 @@ export function ServiceShopDetailPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [values, setValues] = useState<UpdatePlatformShopBody>({});
+  const [subscriptionValues, setSubscriptionValues] = useState<UpdateShopSubscriptionBody>({
+    subscriptionStatus: 'ACTIVE',
+  });
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null);
   const [notice, setNotice] = useState<Notice>(null);
@@ -38,6 +46,11 @@ export function ServiceShopDetailPage() {
         ownerName: shopQuery.data.ownerName,
         phone: shopQuery.data.phone,
         plan: shopQuery.data.plan,
+      });
+      setSubscriptionValues({
+        subscriptionStatus: shopQuery.data.subscriptionStatus,
+        subscriptionStartAt: toDateInputValue(shopQuery.data.subscriptionStartAt),
+        subscriptionEndAt: toDateInputValue(shopQuery.data.subscriptionEndAt),
       });
     }
   }, [shopQuery.data]);
@@ -74,6 +87,19 @@ export function ServiceShopDetailPage() {
       await invalidate();
     },
     onError: () => setNotice({ tone: 'danger', message: "Do'konni blokdan chiqarib bo'lmadi." }),
+  });
+  const subscriptionMutation = useMutation({
+    mutationFn: () =>
+      apiClient.platformShops.updateSubscription(id as string, {
+        subscriptionStatus: subscriptionValues.subscriptionStatus,
+        subscriptionStartAt: fromDateInputValue(subscriptionValues.subscriptionStartAt),
+        subscriptionEndAt: fromDateInputValue(subscriptionValues.subscriptionEndAt),
+      }),
+    onSuccess: async () => {
+      setNotice({ tone: 'success', message: "Obuna ma'lumotlari saqlandi." });
+      await invalidate();
+    },
+    onError: () => setNotice({ tone: 'danger', message: "Obuna ma'lumotlarini saqlab bo'lmadi." }),
   });
   const resetMutation = useMutation({
     mutationFn: () => apiClient.platformShops.resetOwnerPassword(id as string),
@@ -174,6 +200,11 @@ export function ServiceShopDetailPage() {
           label="Yangilangan sana"
           value={new Date(shop.updatedAt).toLocaleString('uz-UZ')}
         />
+        <InfoCard label="Obuna holati" value={shop.subscriptionStatus} />
+        <InfoCard
+          label="Obuna tugash sanasi"
+          value={shop.subscriptionEndAt ? new Date(shop.subscriptionEndAt).toLocaleDateString('uz-UZ') : '-'}
+        />
       </section>
 
       <section className="rounded-md border border-ink-200 bg-[#dfe8df] shadow-sm" id="edit">
@@ -225,6 +256,65 @@ export function ServiceShopDetailPage() {
               type="submit"
             >
               {updateMutation.isPending ? 'Saqlanmoqda...' : 'Saqlash'}
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section className="rounded-md border border-ink-200 bg-[#dfe8df] shadow-sm">
+        <div className="border-b border-ink-200 px-4 py-4">
+          <h3 className="font-semibold text-ink-950">Obuna boshqaruvi</h3>
+          <p className="mt-1 text-sm text-ink-500">
+            Payment provider ulanmagan MVP: Service Admin muddat va holatni qo'lda boshqaradi.
+          </p>
+        </div>
+        <form
+          className="grid gap-4 p-4 sm:grid-cols-3"
+          onSubmit={(event) => {
+            event.preventDefault();
+            subscriptionMutation.mutate();
+          }}
+        >
+          <div>
+            <label className="text-sm font-medium text-ink-700">Obuna holati</label>
+            <select
+              className="mt-2 h-10 w-full rounded-md border border-ink-200 bg-ink-50 px-3 text-sm"
+              onChange={(event) =>
+                setSubscriptionValues((current) => ({
+                  ...current,
+                  subscriptionStatus: event.target.value as SubscriptionStatus,
+                }))
+              }
+              value={subscriptionValues.subscriptionStatus}
+            >
+              <option value="ACTIVE">ACTIVE</option>
+              <option value="EXPIRED">EXPIRED</option>
+              <option value="SUSPENDED">SUSPENDED</option>
+            </select>
+          </div>
+          <Field
+            label="Boshlanish sanasi"
+            onChange={(value) =>
+              setSubscriptionValues((current) => ({ ...current, subscriptionStartAt: value }))
+            }
+            type="date"
+            value={subscriptionValues.subscriptionStartAt ?? ''}
+          />
+          <Field
+            label="Tugash sanasi"
+            onChange={(value) =>
+              setSubscriptionValues((current) => ({ ...current, subscriptionEndAt: value }))
+            }
+            type="date"
+            value={subscriptionValues.subscriptionEndAt ?? ''}
+          />
+          <div className="sm:col-span-3 flex justify-end">
+            <button
+              className="h-10 rounded-md bg-brand-700 px-4 text-sm font-semibold text-white disabled:opacity-70"
+              disabled={subscriptionMutation.isPending}
+              type="submit"
+            >
+              {subscriptionMutation.isPending ? 'Saqlanmoqda...' : 'Obunani saqlash'}
             </button>
           </div>
         </form>
@@ -358,10 +448,12 @@ function Field({
   value,
   error,
   onChange,
+  type = 'text',
 }: {
   label: string;
   value: string;
   error?: string;
+  type?: string;
   onChange: (value: string) => void;
 }) {
   return (
@@ -370,11 +462,20 @@ function Field({
       <input
         className={`mt-2 h-10 w-full rounded-md border bg-ink-50 px-3 text-sm outline-none ${error ? 'border-petal-600' : 'border-ink-200'}`}
         onChange={(event) => onChange(event.target.value)}
+        type={type}
         value={value}
       />
       {error ? <p className="mt-2 text-sm text-petal-700">{error}</p> : null}
     </div>
   );
+}
+
+function toDateInputValue(value: string | null) {
+  return value ? value.slice(0, 10) : '';
+}
+
+function fromDateInputValue(value: string | null | undefined) {
+  return value ? new Date(`${value}T00:00:00.000Z`).toISOString() : null;
 }
 
 function validateEditForm(values: UpdatePlatformShopBody): FieldErrors {

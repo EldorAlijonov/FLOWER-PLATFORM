@@ -60,6 +60,7 @@ export type PlatformProfiles = {
 
 export type ShopPlan = 'START' | 'BUSINESS' | 'PRO';
 export type ShopStatus = 'ACTIVE' | 'BLOCKED' | 'ARCHIVED';
+export type SubscriptionStatus = 'ACTIVE' | 'EXPIRED' | 'SUSPENDED';
 
 export type PaginatedResponse<T> = {
   items: T[];
@@ -79,6 +80,9 @@ export type PlatformShop = {
   phone: string;
   plan: ShopPlan;
   status: ShopStatus;
+  subscriptionStatus: SubscriptionStatus;
+  subscriptionStartAt: string | null;
+  subscriptionEndAt: string | null;
   createdAt: string;
 };
 
@@ -139,6 +143,20 @@ export type PlatformDashboard = {
   recentAudit: PlatformAuditLog[];
 };
 
+export type PlatformPlans = {
+  plans: Array<{
+    code: ShopPlan;
+    name: string;
+    description: string;
+    isActive: boolean;
+    maxBranches: number;
+    maxUsers: number;
+    features: string[];
+    shopsCount: number;
+  }>;
+  subscriptionStatuses: Record<SubscriptionStatus, number>;
+};
+
 export type PlatformAuditLog = {
   id: string;
   action: string;
@@ -157,6 +175,12 @@ export type ListPlatformAuditQuery = {
   shopId?: string;
   from?: string;
   to?: string;
+};
+
+export type UpdateShopSubscriptionBody = {
+  subscriptionStatus: SubscriptionStatus;
+  subscriptionStartAt?: string | null;
+  subscriptionEndAt?: string | null;
 };
 
 export type ListPlatformShopsQuery = {
@@ -259,6 +283,15 @@ export function createApiClient(options: ApiClientOptions) {
           body: JSON.stringify(body),
         });
       },
+      updateSubscription(
+        id: string,
+        body: UpdateShopSubscriptionBody,
+      ): Promise<PlatformShop> {
+        return createApiClient(options).request(`/v1/platform/shops/${id}/subscription`, {
+          method: 'PATCH',
+          body: JSON.stringify(body),
+        });
+      },
       block(id: string): Promise<PlatformShopDetail> {
         return createApiClient(options).request(`/v1/platform/shops/${id}/block`, {
           method: 'POST',
@@ -287,6 +320,12 @@ export function createApiClient(options: ApiClientOptions) {
     platformDashboard: {
       get(): Promise<PlatformDashboard> {
         return createApiClient(options).request('/v1/platform/dashboard');
+      },
+    },
+
+    platformPlans: {
+      list(): Promise<PlatformPlans> {
+        return createApiClient(options).request('/v1/platform/plans');
       },
     },
 

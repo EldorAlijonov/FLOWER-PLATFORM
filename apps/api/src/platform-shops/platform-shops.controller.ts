@@ -16,6 +16,7 @@ import {
   createPlatformShopSchema,
   listPlatformAuditQuerySchema,
   listPlatformShopsQuerySchema,
+  updateShopSubscriptionSchema,
   updatePlatformShopSchema,
   zodFieldErrors,
 } from './platform-shops.dto';
@@ -49,6 +50,17 @@ export class PlatformAuditController {
     }
 
     return this.platformShopsService.listAuditLogs(parsed.data);
+  }
+}
+
+@Controller('v1/platform/plans')
+@UseGuards(PlatformAuthGuard)
+export class PlatformPlansController {
+  constructor(private readonly platformShopsService: PlatformShopsService) {}
+
+  @Get()
+  listPlans() {
+    return this.platformShopsService.listPlans();
   }
 }
 
@@ -102,6 +114,20 @@ export class PlatformShopsController {
     }
 
     return this.platformShopsService.updateShop(id, parsed.data, request.platformUser.id);
+  }
+
+  @Patch(':id/subscription')
+  updateSubscription(@Param('id') id: string, @Body() body: unknown, @Req() request: any) {
+    const parsed = updateShopSubscriptionSchema.safeParse(body);
+
+    if (!parsed.success) {
+      throw new BadRequestException({
+        message: "Ma'lumotlarni tekshiring.",
+        errors: zodFieldErrors(parsed.error),
+      });
+    }
+
+    return this.platformShopsService.updateSubscription(id, parsed.data, request.platformUser.id);
   }
 
   @Post(':id/block')

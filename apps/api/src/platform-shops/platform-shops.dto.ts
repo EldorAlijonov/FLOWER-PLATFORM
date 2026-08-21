@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 export const shopPlanValues = ['START', 'BUSINESS', 'PRO'] as const;
 export const shopStatusFilterValues = ['ACTIVE', 'BLOCKED', 'ARCHIVED'] as const;
+export const subscriptionStatusValues = ['ACTIVE', 'EXPIRED', 'SUSPENDED'] as const;
 export const shopSortValues = ['created_desc', 'created_asc', 'name_asc', 'name_desc'] as const;
 export const maxPlatformShopListLimit = 100;
 export const maxPlatformAuditListLimit = 100;
@@ -68,6 +69,14 @@ export const listPlatformAuditQuerySchema = z.object({
 });
 
 export type ListPlatformAuditQuery = z.infer<typeof listPlatformAuditQuerySchema>;
+
+export const updateShopSubscriptionSchema = z.object({
+  subscriptionStatus: z.enum(subscriptionStatusValues),
+  subscriptionStartAt: z.string().datetime().nullable().optional(),
+  subscriptionEndAt: z.string().datetime().nullable().optional(),
+});
+
+export type UpdateShopSubscriptionInput = z.infer<typeof updateShopSubscriptionSchema>;
 
 export function zodFieldErrors(error: z.ZodError) {
   const flattened = error.flatten().fieldErrors;

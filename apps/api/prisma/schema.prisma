@@ -50,6 +50,12 @@ enum SessionStatus {
   EXPIRED
 }
 
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  SUSPENDED
+}
+
 model Shop {
   id        String     @id @default(uuid())
   name      String
@@ -57,6 +63,9 @@ model Shop {
   phone     String     @default("")
   plan      ShopPlan   @default(START)
   status    ShopStatus @default(ACTIVE)
+  subscriptionStatus SubscriptionStatus @default(ACTIVE) @map("subscription_status")
+  subscriptionStartAt DateTime? @map("subscription_start_at")
+  subscriptionEndAt DateTime? @map("subscription_end_at")
   createdAt DateTime   @default(now()) @map("created_at")
   updatedAt DateTime   @updatedAt @map("updated_at")
   users     User[]
@@ -64,6 +73,7 @@ model Shop {
 
   @@index([status])
   @@index([plan])
+  @@index([subscriptionStatus])
   @@index([createdAt])
   @@map("shops")
 }

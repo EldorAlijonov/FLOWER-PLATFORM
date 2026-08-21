@@ -7,6 +7,7 @@ import type {
   CreatePlatformShopInput,
   ListPlatformAuditQuery,
   ListPlatformShopsQuery,
+  UpdateShopSubscriptionInput,
   UpdatePlatformShopInput,
 } from './platform-shops.dto';
 
@@ -88,6 +89,38 @@ export class PlatformShopsService {
         limit: query.limit,
         total,
         totalPages: Math.max(1, Math.ceil(total / query.limit)),
+      },
+    };
+  }
+
+  async listPlans() {
+    const [planGroups, subscriptionGroups] = await Promise.all([
+      this.prisma.shop.groupBy({
+        by: ['plan'],
+        where: { status: { not: 'ARCHIVED' } },
+        _count: { id: true },
+      }),
+      this.prisma.shop.groupBy({
+        by: ['subscriptionStatus'],
+        where: { status: { not: 'ARCHIVED' } },
+        _count: { id: true },
+      }),
+    ]);
+
+    return {
+      plans: planDefinitions.map((plan) => ({
+        ...plan,
+        shopsCount: planGroups.find((group) => group.plan === plan.code)?._count.id ?? 0,
+      })),
+      subscriptionStatuses: {
+        ACTIVE:
+          subscriptionGroups.find((group) => group.subscriptionStatus === 'ACTIVE')?._count.id ?? 0,
+        EXPIRED:
+          subscriptionGroups.find((group) => group.subscriptionStatus === 'EXPIRED')?._count.id ??
+          0,
+        SUSPENDED:
+          subscriptionGroups.find((group) => group.subscriptionStatus === 'SUSPENDED')?._count.id ??
+          0,
       },
     };
   }
@@ -255,6 +288,40 @@ export class PlatformShopsService {
     return this.serializeShop(shop);
   }
 
+  async updateSubscription(
+    id: string,
+    input: UpdateShopSubscriptionInput,
+    platformUserId: string,
+  ) {
+    await this.ensureShopExists(id);
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const shop = await tx.shop.update({
+        where: { id },
+        data: {
+          subscriptionStatus: input.subscriptionStatus,
+          subscriptionStartAt: input.subscriptionStartAt
+            ? new Date(input.subscriptionStartAt)
+            : input.subscriptionStartAt,
+          subscriptionEndAt: input.subscriptionEndAt
+            ? new Date(input.subscriptionEndAt)
+            : input.subscriptionEndAt,
+        },
+        select: this.shopListSelect(),
+      });
+
+      await this.recordAudit(tx, {
+        action: 'SHOP_SUBSCRIPTION_UPDATED',
+        shopId: id,
+        platformUserId,
+        metadata: { shopName: shop.name, subscriptionStatus: input.subscriptionStatus },
+      });
+
+      return shop;
+    });
+
+    return this.serializeShop(updated);
+  }
+
   async blockShop(id: string, platformUserId: string) {
     const shop = await this.ensureShopExists(id);
 
@@ -400,6 +467,9 @@ export class PlatformShopsService {
       phone: true,
       plan: true,
       status: true,
+      subscriptionStatus: true,
+      subscriptionStartAt: true,
+      subscriptionEndAt: true,
       createdAt: true,
       users: {
         where: { role: 'OWNER' },
@@ -429,6 +499,9 @@ export class PlatformShopsService {
     phone: string;
     plan: string;
     status: string;
+    subscriptionStatus: string;
+    subscriptionStartAt?: Date | null;
+    subscriptionEndAt?: Date | null;
     createdAt: Date;
     users?: Array<{ login: string }>;
   }) {
@@ -440,6 +513,9 @@ export class PlatformShopsService {
       phone: shop.phone,
       plan: shop.plan,
       status: shop.status,
+      subscriptionStatus: shop.subscriptionStatus,
+      subscriptionStartAt: shop.subscriptionStartAt?.toISOString() ?? null,
+      subscriptionEndAt: shop.subscriptionEndAt?.toISOString() ?? null,
       createdAt: shop.createdAt.toISOString(),
     };
   }
@@ -579,10 +655,42 @@ export class PlatformShopsService {
     if (action === 'SHOP_UNBLOCKED') return `${shopName} blokdan chiqarildi.`;
     if (action === 'OWNER_PASSWORD_RESET') return `${shopName} owner paroli reset qilindi.`;
     if (action === 'SHOP_ARCHIVED') return `${shopName} arxivlandi.`;
+    if (action === 'SHOP_SUBSCRIPTION_UPDATED')
+      return `${shopName} obuna holati yangilandi.`;
 
     return action;
   }
 }
+
+const planDefinitions = [
+  {
+    code: 'START',
+    name: 'START',
+    description: "Yangi yoki kichik do'konlar uchun asosiy boshqaruv paketi.",
+    isActive: true,
+    maxBranches: 1,
+    maxUsers: 3,
+    features: ['Asosiy CRM', "Do'kon boshqaruvi", 'Standart yordam'],
+  },
+  {
+    code: 'BUSINESS',
+    name: 'BUSINESS',
+    description: "O'sayotgan do'konlar uchun kengaytirilgan boshqaruv paketi.",
+    isActive: true,
+    maxBranches: 3,
+    maxUsers: 10,
+    features: ['Kengaytirilgan hisobot', 'Jamoa boshqaruvi', 'Audit nazorati'],
+  },
+  {
+    code: 'PRO',
+    name: 'PRO',
+    description: "Katta jamoa va tarmoqli do'konlar uchun professional paket.",
+    isActive: true,
+    maxBranches: 10,
+    maxUsers: 50,
+    features: ['Premium boshqaruv', 'Ustuvor yordam', 'Keng limitlar'],
+  },
+] as const;
 
 function createTemporaryPassword() {
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';

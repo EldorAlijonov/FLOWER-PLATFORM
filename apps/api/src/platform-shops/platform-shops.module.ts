@@ -5,13 +5,19 @@ import { PrismaModule } from '../database/prisma.module';
 import {
   PlatformAuditController,
   PlatformDashboardController,
+  PlatformPlansController,
   PlatformShopsController,
 } from './platform-shops.controller';
 import { PlatformShopsService } from './platform-shops.service';
 
 @Module({
   imports: [AuthModule, PrismaModule],
-  controllers: [PlatformShopsController, PlatformDashboardController, PlatformAuditController],
+  controllers: [
+    PlatformShopsController,
+    PlatformDashboardController,
+    PlatformAuditController,
+    PlatformPlansController,
+  ],
   providers: [PlatformShopsService, PasswordService],
 })
 export class PlatformShopsModule {}
