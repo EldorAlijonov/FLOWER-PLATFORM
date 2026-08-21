@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -14,6 +15,18 @@ async function bootstrap() {
     credentials: true,
   });
   app.setGlobalPrefix('api');
+
+  if (process.env.ENABLE_SWAGGER === 'true' || process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('Flower Platform API')
+      .setDescription('Service Panel and platform management API.')
+      .setVersion('0.1.0')
+      .addCookieAuth('fp_platform_session')
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api/docs', app, document);
+  }
+
   await app.listen(process.env.PORT ? Number(process.env.PORT) : 3000);
 }
 
